@@ -1,6 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using AutoMapper.Features;
+using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
@@ -9,8 +15,11 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using RazorLight;
+using VLO_BOARDS.Auth;
 using VLO_BOARDS.Data;
 using VLO_BOARDS.Models;
 using VLO_BOARDS.Models.DataModels;
@@ -32,10 +41,21 @@ namespace VLO_BOARDS
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("NPGSQL")));
+
+            services.AddScoped<IPasswordHasher<ApplicationUser>, Argon2IDHasher<ApplicationUser>>();
             
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo {Title = "ASP.NETCore_suvlo", Version = "v1"});
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = "ASP.NETCore_suvlo", Version = "v1", Contact = new OpenApiContact()
+                {
+                    Name = "GJusz",
+                    Email = "gkjuszczyk@gmail.com"
+                }});
+                
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
 
             services.AddTransient<Features>(x => new Features
@@ -61,6 +81,17 @@ namespace VLO_BOARDS
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+            //razor light instead of razor since it's built for rendering loose cshtml files + the whole app should not be dependent on any razor engine besides razor light so razor can be dumped all together in the near future
+            services.AddSingleton<RazorLightEngine>(x =>
+            {
+                string razorTemplateDir = Configuration.GetSection("RazorLightTemplateDirs").Get<string>();
+                var templateEngine = new RazorLightEngineBuilder()
+                    .UseFileSystemProject(razorTemplateDir)
+                    .UseMemoryCachingProvider()
+                    .Build();
+                return templateEngine;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -81,7 +112,14 @@ namespace VLO_BOARDS
             if (features.SwaggerEnabled)
             {
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "VLO BOARDS API"));
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("v1/swagger.json", "VLO Boards API v1");
+                });
+                app.UseReDoc(c =>
+                {
+                    c.DocumentTitle = "Dokumentacja API Vlo Boards, dostępna również pod /swagger/";
+                });
             }
 
             app.UseHttpsRedirection();
