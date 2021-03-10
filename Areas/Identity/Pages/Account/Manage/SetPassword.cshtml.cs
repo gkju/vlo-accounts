@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,6 +12,7 @@ using VLO_BOARDS.Models.DataModels;
 
 namespace VLO_BOARDS.Areas.Identity.Pages.Account.Manage
 {
+    [Authorize]
     public class SetPasswordModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;

@@ -48,8 +48,11 @@
     <PackageReference Include="Npgsql" Version="5.0.2" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.2" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
+    <PackageReference Include="PreMailer.Net" Version="2.2.0" />
     <PackageReference Include="RazorLight" Version="2.0.0-rc.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.1.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="6.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="6.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.1.0" />
