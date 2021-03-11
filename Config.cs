@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using IdentityServer4;
 using IdentityServer4.Models;
+using Microsoft.OpenApi.Writers;
 
 namespace VLO_BOARDS
 {
@@ -13,10 +14,16 @@ namespace VLO_BOARDS
         {
             new ApiResource()
             {
-
+                Enabled = true,
+                Name = "VLO_BOARDS_API",
+                DisplayName = "VLO Boards API",
+                AllowedAccessTokenSigningAlgorithms = new List<string> {"ES512"},
+                Scopes = new List<string> {"VLO_BOARDS"},
+                UserClaims = new List<string> {"name", "email", "openid", "profile"},
+                ApiSecrets = new List<Secret> {new Secret("SECRET1")}
             }
         };
-        public static IEnumerable<ApiScope> ApiScopes => new List<ApiScope> { new ApiScope("VLO_BOARDS", "Base api scope") };
+        public static IEnumerable<ApiScope> ApiScopes => new List<ApiScope> { new ApiScope("VLO_BOARDS", "VLO Boards api scope") };
         
         public static IEnumerable<Client> Clients =>
             new List<Client>
@@ -38,7 +45,7 @@ namespace VLO_BOARDS
                         RequirePkce = true,
                         RequireClientSecret = false,
                         ClientSecrets = new List<Secret> {},
-                    AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"}
+                    AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
                 },
                 new Client
                 {

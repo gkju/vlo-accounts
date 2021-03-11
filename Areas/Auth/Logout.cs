@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
+using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using VLO_BOARDS.Models.DataModels;
 
 namespace VLO_BOARDS.Areas.Auth
 {

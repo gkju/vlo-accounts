@@ -6,12 +6,11 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Linq;
 using System.Threading.Tasks;
+using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using VLO_BOARDS.Models;
-using VLO_BOARDS.Models.DataModels;
 
 namespace VLO_BOARDS.Areas.Identity.Pages.Account.Manage
 {

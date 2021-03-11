@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using VLO_BOARDS.Models;
+
 
 namespace VLO_BOARDS.Areas.Identity.Pages.Account.Manage
 {

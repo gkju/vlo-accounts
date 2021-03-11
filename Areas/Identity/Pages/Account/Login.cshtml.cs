@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using AccountsData.Models.DataModels;
 using IdentityServer4.Events;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -13,8 +14,6 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using VLO_BOARDS.Models;
-using VLO_BOARDS.Models.DataModels;
 
 namespace VLO_BOARDS.Areas.Identity.Pages.Account
 {

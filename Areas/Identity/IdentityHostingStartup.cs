@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VLO_BOARDS.Data;
-using VLO_BOARDS.Models;
 
 [assembly: HostingStartup(typeof(VLO_BOARDS.Areas.Identity.IdentityHostingStartup))]
 namespace VLO_BOARDS.Areas.Identity

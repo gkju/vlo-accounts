@@ -1,43 +1,28 @@
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
-using AutoMapper.Features;
-using IdentityModel;
 using IdentityServer4;
 using IdentityServer4.EntityFramework.DbContexts;
-using IdentityServer4.Models;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RazorLight;
 using VLO_BOARDS.Auth;
-using VLO_BOARDS.Data;
-using VLO_BOARDS.Models;
-using VLO_BOARDS.Models.DataModels;
 using System.Linq;
+using AccountsData.Data;
+using AccountsData.Models.DataModels;
 using IdentityServer4.Configuration;
-using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Http;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using VLO_BOARDS.Migrations;
-using Client = IdentityServer4.EntityFramework.Entities.Client;
 
 
 namespace VLO_BOARDS
