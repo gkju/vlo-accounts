@@ -8,7 +8,14 @@ namespace VLO_BOARDS
     {
         
         public static IEnumerable<IdentityResource> IdentityResources => new List<IdentityResource> { new IdentityResources.OpenId(),  new IdentityResources.Profile(), };
-        
+
+        public static IEnumerable<ApiResource> ApiResources => new List<ApiResource>()
+        {
+            new ApiResource()
+            {
+
+            }
+        };
         public static IEnumerable<ApiScope> ApiScopes => new List<ApiScope> { new ApiScope("VLO_BOARDS", "Base api scope") };
         
         public static IEnumerable<Client> Clients =>

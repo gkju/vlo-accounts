@@ -227,6 +227,16 @@ namespace VLO_BOARDS
                     }
                     context.SaveChanges();
                 }
+
+                if (!context.ApiResources.Any())
+                {
+                    foreach (var resource in Config.ApiResources)
+                    {
+                        context.ApiResources.Add(resource.ToEntity());
+                    }
+
+                    context.SaveChanges();
+                }
                 if (!context.IdentityResources.Any())
                 {
                     foreach (var resource in Config.IdentityResources)
