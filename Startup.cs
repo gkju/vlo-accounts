@@ -106,6 +106,8 @@ namespace VLO_BOARDS
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
                     options.Events.RaiseSuccessEvents = true;
+                    
+                    
                 })
                 .AddConfigurationStore(options => options.ConfigureDbContext = b =>
                     b.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
