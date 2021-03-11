@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using IdentityServer4.Events;
+using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
@@ -22,14 +24,20 @@ namespace VLO_BOARDS.Areas.Identity.Pages.Account
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly IEventService _events;
+        private readonly IIdentityServerInteractionService _interaction;
 
         public LoginModel(SignInManager<ApplicationUser> signInManager, 
             ILogger<LoginModel> logger,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IIdentityServerInteractionService interaction,
+            IEventService events)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _events = events;
+            _interaction = interaction;
         }
 
         [BindProperty]
@@ -45,8 +53,8 @@ namespace VLO_BOARDS.Areas.Identity.Pages.Account
         public class InputModel
         {
             [Required]
-            [EmailAddress]
-            public string Email { get; set; }
+            [DataType(DataType.Text)]
+            public string UserName { get; set; }
 
             [Required]
             [DataType(DataType.Password)]
@@ -75,6 +83,8 @@ namespace VLO_BOARDS.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            
             returnUrl ??= Url.Content("~/");
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
@@ -83,10 +93,12 @@ namespace VLO_BOARDS.Areas.Identity.Pages.Account
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(Input.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+                    var user = await _userManager.FindByEmailAsync(Input.UserName);
                     _logger.LogInformation("User logged in.");
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(Input.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
@@ -100,6 +112,7 @@ namespace VLO_BOARDS.Areas.Identity.Pages.Account
                 }
                 else
                 {
+                    await _events.RaiseAsync(new UserLoginFailureEvent(Input.UserName, "invalid credentials", clientId:context?.Client.ClientId));
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }

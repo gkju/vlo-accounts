@@ -179,12 +179,15 @@ export class AuthorizeService {
             return;
         }
 
-        let response = await fetch(ApplicationPaths.ApiAuthorizationClientConfigurationUrl);
-        if (!response.ok) {
-            throw new Error(`Could not load settings for '${ApplicationName}'`);
-        }
-
-        let settings = await response.json();
+        let settings = {
+            authority: "https://localhost:44328",
+            client_id: "VLO_BOARDS",
+            redirect_uri: "https://localhost:44328/authentication/login-callback",
+            response_type: "code",
+            scope:"openid profile VLO_BOARDS",
+            post_logout_redirect_uri : "https://localhost:44328/authentication/logout-callback"
+        };
+        
         settings.automaticSilentRenew = true;
         settings.includeIdTokenInSilentRenew = true;
         settings.userStore = new WebStorageStateStore({

@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using AutoMapper.Features;
 using IdentityModel;
 using IdentityServer4;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Server.Circuits;
@@ -27,6 +30,15 @@ using VLO_BOARDS.Auth;
 using VLO_BOARDS.Data;
 using VLO_BOARDS.Models;
 using VLO_BOARDS.Models.DataModels;
+using System.Linq;
+using IdentityServer4.Configuration;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Mappers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using VLO_BOARDS.Migrations;
+using Client = IdentityServer4.EntityFramework.Entities.Client;
+
 
 namespace VLO_BOARDS
 {
@@ -43,9 +55,17 @@ namespace VLO_BOARDS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+            
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("NPGSQL")));
-
+            services.AddDbContext<ConfigurationDbContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                    sql => sql.MigrationsAssembly(migrationsAssembly)));
+            services.AddDbContext<PersistedGrantDbContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                    sql => sql.MigrationsAssembly(migrationsAssembly)));
+            
             services.AddScoped<IPasswordHasher<ApplicationUser>, Argon2IDHasher<ApplicationUser>>();
             
             services.AddSwaggerGen(c =>
@@ -69,11 +89,33 @@ namespace VLO_BOARDS
             
             services.AddDatabaseDeveloperPageExceptionFilter();
 
-            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
 
-            var is4Builder = services.AddIdentityServer()
-                .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+            var is4Builder = services.AddIdentityServer(options =>
+                {
+                    options.UserInteraction = new UserInteractionOptions()
+                    {
+                        LogoutUrl = "/Identity/account/logout",
+                        LoginUrl = "/Identity/account/login",
+                        LoginReturnUrlParameter = "returnUrl"
+                    };
+                    
+                    options.Events.RaiseErrorEvents = true;
+                    options.Events.RaiseInformationEvents = true;
+                    options.Events.RaiseFailureEvents = true;
+                    options.Events.RaiseSuccessEvents = true;
+                })
+                .AddConfigurationStore(options => options.ConfigureDbContext = b =>
+                    b.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                        sql => sql.MigrationsAssembly(migrationsAssembly)))
+                .AddOperationalStore(options => options.ConfigureDbContext = b =>
+                    b.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                        sql => sql.MigrationsAssembly(migrationsAssembly)))
+                .AddAspNetIdentity<ApplicationUser>();
+                
+
 
             var pemBytes = Convert.FromBase64String(@Configuration.GetSection("ISKeys:ECDSAPEM").Get<string>());
             var ecdsa = ECDsa.Create();
@@ -81,9 +123,6 @@ namespace VLO_BOARDS
             var ecdsaKey = new ECDsaSecurityKey(ecdsa) {KeyId = "secp521r1key"};
 
             is4Builder.AddSigningCredential(ecdsaKey, IdentityServerConstants.ECDsaSigningAlgorithm.ES512);
-            
-            services.AddAuthentication()
-                .AddIdentityServerJwt();
 
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -104,11 +143,17 @@ namespace VLO_BOARDS
                     .Build();
                 return templateEngine;
             });
+            
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+            services.AddAuthentication();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, Features features)
         {
+            app.UseCookiePolicy(new CookiePolicyOptions { MinimumSameSitePolicy = SameSiteMode.Strict });
+            InitializeDatabase(app);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -137,10 +182,7 @@ namespace VLO_BOARDS
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
-
             app.UseRouting();
-
-            app.UseAuthentication();
             app.UseIdentityServer();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
@@ -164,5 +206,44 @@ namespace VLO_BOARDS
                 }
             });
         }
+
+        private void InitializeDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>
+                ().CreateScope())
+            {
+                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().
+                    Database.Migrate();
+                var context = serviceScope.ServiceProvider.GetRequiredService
+                    <ConfigurationDbContext>();
+                context.Database.Migrate();
+                if (!context.Clients.Any())
+                {
+                    foreach (var client in Config.Clients)
+                    {
+                        context.Clients.Add(client.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+                if (!context.IdentityResources.Any())
+                {
+                    foreach (var resource in Config.IdentityResources)
+                    {
+                        context.IdentityResources.Add(resource.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+                if (!context.ApiScopes.Any())
+                {
+                    foreach (var resource in Config.ApiScopes)
+                    {
+                        context.ApiScopes.Add(resource.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+            }
+        }
+
+
     }
 }
