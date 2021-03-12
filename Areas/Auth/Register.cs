@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using IdentityServer4.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,26 +19,32 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("[area]/[controller]")]
-    public class RegisterController : Controller
+    public class RegisterController : ControllerBase
     {
     private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<RegisterController> _logger;
         private readonly IEmailSender _emailSender;
         private readonly RazorLightEngine _razorLightEngine;
+        private readonly IEventService _events;
+        private readonly IIdentityServerInteractionService _interaction;
 
         public RegisterController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterController> logger,
             IEmailSender emailSender, 
-            RazorLightEngine engine)
+            RazorLightEngine engine,
+            IIdentityServerInteractionService interaction,
+            IEventService events)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
             _razorLightEngine = engine;
+            _events = events;
+            _interaction = interaction;
         }
 
         public class InputModel
@@ -62,24 +71,25 @@ namespace VLO_BOARDS.Areas.Auth
             public string Username { get; set; }
         }
 
-        public class RegistrationResult
-        {
-            public RegistrationResult(string message, bool redirect = false, string returnUrl = "")
-            {
-                this.message = message;
-                this.redirect = redirect;
-                this.returnUrl = returnUrl;
-            }
-            
-            public string returnUrl { get; set; } = "";
-            public bool redirect { get; set; } = false;
-            public string message { get; set; }
-        }
-        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Input"></param>
+        /// <param name="returnUrl"></param>
+        /// <returns></returns>
         [HttpPost]
+        [ProducesResponseType(typeof(RegistrationResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
+
+            //!= true for semantic reasons
+            if ((_interaction.IsValidReturnUrl(returnUrl)) != true)
+            {
+                returnUrl = Url.Content("~/");
+            }
+
             var ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
@@ -92,10 +102,8 @@ namespace VLO_BOARDS.Areas.Auth
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = Url.Page(
-                        "/Account/ConfirmEmail",
-                        pageHandler: null,
-                        values: new { area = "Identity", userId = user.Id, code = code, returnUrl = returnUrl },
-                        protocol: Request.Scheme);
+                        "/ConfirmEmail",
+                        values: new { userId = user.Id, code = code });
 
                     var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
                         new {Link = callbackUrl})).Html;
@@ -128,5 +136,14 @@ namespace VLO_BOARDS.Areas.Auth
             return BadRequest(ModelState);
         }
 
+    }
+    
+    public class RegistrationResult
+    {
+        public RegistrationResult(string message)
+        {
+            this.message = message;
+        }
+        public string message { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +14,7 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("[area]/[controller]")]
-    public class ResetPasswordController : Controller
+    public class ResetPasswordController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -42,8 +43,12 @@ namespace VLO_BOARDS.Areas.Auth
             public string Code { get; set; }
         }
 
+        /// <summary>
+        /// Changes the password to a new one based on input
+        /// </summary>
+        /// <param name="Input"></param>
+        /// <returns>Either ok success or bad request with modelstate</returns>
         [HttpPost]
-        [SwaggerOperation(Tags = new[] { "Auth" })]
         public async Task<ActionResult<string>> OnPostAsync(InputModel Input) {
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)

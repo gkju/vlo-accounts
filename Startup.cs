@@ -60,6 +60,8 @@ namespace VLO_BOARDS
                     Name = "GJusz",
                     Email = "gkjuszczyk@gmail.com"
                 }});
+                
+                c.CustomSchemaIds(type => type.ToString());
 
                 c.EnableAnnotations();
 
@@ -77,13 +79,36 @@ namespace VLO_BOARDS
             services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
+            
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 8;
+                options.Password.RequiredUniqueChars = 4;
+            });
+
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.User.AllowedUserNameCharacters =
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+&*()";
+                options.User.RequireUniqueEmail = true;
+            });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/Login";
+                options.LogoutPath = "/Logout";
+            });
 
             var is4Builder = services.AddIdentityServer(options =>
                 {
                     options.UserInteraction = new UserInteractionOptions()
                     {
-                        LogoutUrl = "/Identity/account/logout",
-                        LoginUrl = "/Identity/account/login",
+                        LogoutUrl = "/Logout",
+                        LoginUrl = "/Login",
                         LoginReturnUrlParameter = "returnUrl"
                     };
                     

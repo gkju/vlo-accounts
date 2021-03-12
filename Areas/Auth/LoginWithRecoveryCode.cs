@@ -2,8 +2,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using IdentityServer4.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -13,46 +16,56 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("[area]/[controller]")]
-    public class LoginWithRecoveryCodeController : Controller
+    public class LoginWithRecoveryCodeController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginWithRecoveryCodeController> _logger;
+        private readonly IEventService _events;
+        private readonly IIdentityServerInteractionService _interaction;
 
-        public LoginWithRecoveryCodeController(SignInManager<ApplicationUser> signInManager, ILogger<LoginWithRecoveryCodeController> logger)
+        public LoginWithRecoveryCodeController(
+            SignInManager<ApplicationUser> signInManager, 
+            ILogger<LoginWithRecoveryCodeController> logger,
+            IIdentityServerInteractionService interaction,
+            IEventService events)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _events = events;
+            _interaction = interaction;
         }
         
         public class InputModel
         {
-            [BindProperty]
             [Required]
             [DataType(DataType.Text)]
             [Display(Name = "Recovery Code")]
             public string RecoveryCode { get; set; }
         }
+
         
-        public class LoginWithRecoveryCodeResult
-        {
-            public string message { get; set; }
-            public bool redirect { get; set; }
-            public string returnUrl { get; set; }
-
-            public LoginWithRecoveryCodeResult(string message, bool redirect = false, string returnUrl = "")
-            {
-                this.message = message;
-                this.redirect = redirect;
-                this.returnUrl = returnUrl;
-            }
-        }
-
+        /// <summary>
+        /// Logins user using 2fa recovery code
+        /// </summary>
+        /// <remarks>
+        /// Also sanitizes returnurl. Who could've thought
+        ///
+        /// </remarks>
+        /// <returns>Login with recovery code result</returns>
+        /// <response code="200">Returns LoginWithRecoveryCodeResult</response>
+        /// <response code="400">Default invalid model response</response>
+        /// <response code="423">User is locked out of his account</response> 
         [HttpPost]
+        [ProducesResponseType(typeof(LoginWithRecoveryCodeResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LoginWithRecoveryCodeResult), StatusCodes.Status423Locked)]
         public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
         {
-            if (!ModelState.IsValid)
+            returnUrl ??= Url.Content("~/");
+            
+            //!= true for semantic reasons
+            if (_interaction.IsValidReturnUrl(returnUrl) != true)
             {
-                return BadRequest(ModelState);
+                returnUrl = Url.Content("~/");
             }
 
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
@@ -80,9 +93,24 @@ namespace VLO_BOARDS.Areas.Auth
             else
             {
                 _logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", user.Id);
-                ModelState.AddModelError(string.Empty, "Invalid recovery code entered.");
+                ModelState.AddModelError(string.Empty, "Niepoprawny kod odzyskiwania.");
                 return BadRequest(ModelState);
             }
+        }
+    }
+    
+
+    public class LoginWithRecoveryCodeResult
+    {
+        public string message { get; set; }
+        public bool redirect { get; set; }
+        public string returnUrl { get; set; }
+
+        public LoginWithRecoveryCodeResult(string message, bool redirect = false, string returnUrl = "")
+        {
+            this.message = message;
+            this.redirect = redirect;
+            this.returnUrl = returnUrl;
         }
     }
 }

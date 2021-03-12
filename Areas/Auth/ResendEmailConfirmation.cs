@@ -15,7 +15,7 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("[area]/[controller]")]
-    public class ResendEmailConfirmationController : Controller
+    public class ResendEmailConfirmationController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
@@ -35,6 +35,11 @@ namespace VLO_BOARDS.Areas.Auth
             public string Email { get; set; }
         }
         
+        /// <summary>
+        /// Resends email confirmation
+        /// </summary>
+        /// <response code="200">Success</response>
+        [HttpPost]
         public async Task<IActionResult> OnPostAsync(InputModel Input)
         {
             
@@ -49,10 +54,8 @@ namespace VLO_BOARDS.Areas.Auth
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             var callbackUrl = Url.Page(
-                "/Account/ConfirmEmail",
-                pageHandler: null,
-                values: new { userId = userId, code = code },
-                protocol: Request.Scheme);
+                "/ConfirmEmail",
+                values: new { userId = userId, code = code });
             
             var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
                 new {Link = callbackUrl})).Html;

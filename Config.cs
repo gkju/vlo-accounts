@@ -46,6 +46,7 @@ namespace VLO_BOARDS
                         RequireClientSecret = false,
                         ClientSecrets = new List<Secret> {},
                     AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
+                    AllowedCorsOrigins = new List<string>() {"https://localhost:44328", "http://localhost:44328"}
                 },
                 new Client
                 {
