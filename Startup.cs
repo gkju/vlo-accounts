@@ -20,6 +20,10 @@ using VLO_BOARDS.Auth;
 using System.Linq;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
+using AccountsData.Models.DataModels.Implementations.Properties;
+using AccountsData.Models.DataModels.Implementations.Roles;
+using AccountsData.Models.DataModels.Implementations.RoleScope;
+using AccountsData.Models.DataModels.RoleProperties;
 using IdentityServer4.Configuration;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Http;
@@ -40,15 +44,17 @@ namespace VLO_BOARDS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var appDbContextNPGSQLConnection = Configuration.GetConnectionString("NPGSQL");
+            var is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("NPGSQL")));
+                options.UseNpgsql(appDbContextNPGSQLConnection, sql => sql.MigrationsAssembly(migrationsAssembly)));
             services.AddDbContext<ConfigurationDbContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                options.UseNpgsql(is4DbContextNPGSQLConnection,
                     sql => sql.MigrationsAssembly(migrationsAssembly)));
             services.AddDbContext<PersistedGrantDbContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                options.UseNpgsql(is4DbContextNPGSQLConnection,
                     sql => sql.MigrationsAssembly(migrationsAssembly)));
             
             services.AddScoped<IPasswordHasher<ApplicationUser>, Argon2IDHasher<ApplicationUser>>();
@@ -120,10 +126,10 @@ namespace VLO_BOARDS
                     
                 })
                 .AddConfigurationStore(options => options.ConfigureDbContext = b =>
-                    b.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                    b.UseNpgsql(is4DbContextNPGSQLConnection,
                         sql => sql.MigrationsAssembly(migrationsAssembly)))
                 .AddOperationalStore(options => options.ConfigureDbContext = b =>
-                    b.UseNpgsql(Configuration.GetConnectionString("IDENTITYDB"),
+                    b.UseNpgsql(is4DbContextNPGSQLConnection,
                         sql => sql.MigrationsAssembly(migrationsAssembly)))
                 .AddAspNetIdentity<ApplicationUser>();
                 
@@ -142,7 +148,7 @@ namespace VLO_BOARDS
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = "ClientApp/build";
+                configuration.RootPath = "vlo-accounts-frontend/build";
             });
 
             //razor light instead of razor since it's built for rendering loose cshtml files + the whole app should not be dependent on any razor engine besides razor light so razor can be dumped all together in the near future
@@ -161,10 +167,10 @@ namespace VLO_BOARDS
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, Features features)
+        public async void Configure(IApplicationBuilder app, IWebHostEnvironment env, Features features)
         {
             app.UseCookiePolicy(new CookiePolicyOptions { MinimumSameSitePolicy = SameSiteMode.Strict });
-            InitializeDatabase(app);
+            InitializeDatabase(app, new Config(env));
 
             if (env.IsDevelopment())
             {
@@ -208,18 +214,18 @@ namespace VLO_BOARDS
                 endpoints.MapRazorPages();
             });
 
-            app.UseSpa(spa =>
+            /*app.UseSpa(spa =>
             {
-                spa.Options.SourcePath = "ClientApp";
+                spa.Options.SourcePath = "vlo-accounts-frontend";
 
                 if (env.IsDevelopment())
                 {
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
-            });
+            });*/
         }
 
-        private void InitializeDatabase(IApplicationBuilder app)
+        private void InitializeDatabase(IApplicationBuilder app, Config config)
         {
             using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>
                 ().CreateScope())
@@ -231,7 +237,7 @@ namespace VLO_BOARDS
                 context.Database.Migrate();
                 if (!context.Clients.Any())
                 {
-                    foreach (var client in Config.Clients)
+                    foreach (var client in config.Clients)
                     {
                         context.Clients.Add(client.ToEntity());
                     }
@@ -240,7 +246,7 @@ namespace VLO_BOARDS
 
                 if (!context.ApiResources.Any())
                 {
-                    foreach (var resource in Config.ApiResources)
+                    foreach (var resource in config.ApiResources)
                     {
                         context.ApiResources.Add(resource.ToEntity());
                     }
@@ -249,7 +255,7 @@ namespace VLO_BOARDS
                 }
                 if (!context.IdentityResources.Any())
                 {
-                    foreach (var resource in Config.IdentityResources)
+                    foreach (var resource in config.IdentityResources)
                     {
                         context.IdentityResources.Add(resource.ToEntity());
                     }
@@ -257,7 +263,7 @@ namespace VLO_BOARDS
                 }
                 if (!context.ApiScopes.Any())
                 {
-                    foreach (var resource in Config.ApiScopes)
+                    foreach (var resource in config.ApiScopes)
                     {
                         context.ApiScopes.Add(resource.ToEntity());
                     }

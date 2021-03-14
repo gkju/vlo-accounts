@@ -101,7 +101,7 @@ namespace VLO_BOARDS.Areas.Auth
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
+                    var callbackUrl = Url.RouteUrl(
                         "/ConfirmEmail",
                         values: new { userId = user.Id, code = code });
 

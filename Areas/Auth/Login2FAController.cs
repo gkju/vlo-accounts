@@ -54,7 +54,7 @@ namespace VLO_BOARDS.Areas.Auth
             returnUrl = returnUrl ?? Url.Content("~/");
 
             //!= true for semantic reasons
-            if ((_interaction.IsValidReturnUrl(returnUrl) || Url.IsLocalUrl(returnUrl)) != true)
+            if (_interaction.IsValidReturnUrl(returnUrl) != true)
             {
                 returnUrl = Url.Content("~/");
             }

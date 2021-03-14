@@ -53,7 +53,7 @@ namespace VLO_BOARDS.Areas.Auth
                 var code = await _userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-                var callbackUrl = Url.Page(
+                var callbackUrl = Url.RouteUrl(
                     "/ResetPassword",
                     values: new { code });
                 

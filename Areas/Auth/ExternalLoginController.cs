@@ -61,7 +61,7 @@ namespace VLO_BOARDS.Areas.Auth
             }
             
             // Request a redirect to the external login provider.
-            var redirectUrl = Url.Page("./ExternalLogin/Callback",  values: new { returnUrl });
+            var redirectUrl = Url.RouteUrl("./ExternalLogin/Callback",  values: new { returnUrl });
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
@@ -170,7 +170,7 @@ namespace VLO_BOARDS.Areas.Auth
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
+                    var callbackUrl = Url.RouteUrl(
                         "/ConfirmEmail",
                         values: new { userId = userId, code = code });
 
