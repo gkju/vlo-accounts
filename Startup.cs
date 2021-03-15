@@ -20,10 +20,6 @@ using VLO_BOARDS.Auth;
 using System.Linq;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
-using AccountsData.Models.DataModels.Implementations.Properties;
-using AccountsData.Models.DataModels.Implementations.Roles;
-using AccountsData.Models.DataModels.Implementations.RoleScope;
-using AccountsData.Models.DataModels.RoleProperties;
 using IdentityServer4.Configuration;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Http;
@@ -214,6 +210,8 @@ namespace VLO_BOARDS
                 endpoints.MapRazorPages();
             });
 
+            
+            app.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer("http://localhost:3000"));
             /*app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "vlo-accounts-frontend";
