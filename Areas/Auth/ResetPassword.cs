@@ -17,10 +17,12 @@ namespace VLO_BOARDS.Areas.Auth
     public class ResetPasswordController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly Captcha _captcha;
 
-        public ResetPasswordController(UserManager<ApplicationUser> userManager)
+        public ResetPasswordController(UserManager<ApplicationUser> userManager, Captcha captcha)
         {
             _userManager = userManager;
+            _captcha = captcha;
         }
         
         public class InputModel
@@ -41,6 +43,9 @@ namespace VLO_BOARDS.Areas.Auth
 
             [Required]
             public string Code { get; set; }
+            
+            [Required]
+            public string CaptchaResponse { get; set; }
         }
 
         /// <summary>
@@ -50,6 +55,13 @@ namespace VLO_BOARDS.Areas.Auth
         /// <returns>Either ok success or bad request with modelstate</returns>
         [HttpPost]
         public async Task<ActionResult<string>> OnPostAsync(InputModel Input) {
+            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) > 0.3)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+                return BadRequest(ModelState);
+            }
+            
+            
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {

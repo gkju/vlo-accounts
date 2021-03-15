@@ -25,16 +25,19 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly ILogger<LoginController> _logger;
         private readonly IEventService _events;
         private readonly IIdentityServerInteractionService _interaction;
+        private readonly Captcha _captcha;
 
         public LoginController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<LoginController> logger,
             IIdentityServerInteractionService interaction,
-            IEventService events)
+            IEventService events,
+            Captcha captcha)
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = userManager;
             _events = events;
             _interaction = interaction;
+            _captcha = captcha;
         }
         
         public class InputModel
@@ -50,6 +53,9 @@ namespace VLO_BOARDS.Areas.Auth
             [Required]
             [Display(Name = "Zapamiętaj mnie")]
             public bool RememberMe { get; set; }
+            
+            [Required]
+            public string CaptchaResponse { get; set; }
         }
 
         /// <summary>
@@ -62,6 +68,12 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
         public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
         {
+            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) > 0.3)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+                return BadRequest(ModelState);
+            }
+            
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
             
             returnUrl ??= Url.Content("~/");

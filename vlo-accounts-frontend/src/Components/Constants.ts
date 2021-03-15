@@ -1,3 +1,5 @@
+import {MouseEventHandler} from "react";
+
 export interface textInputProps {
     size?: InputSize,
     password?: boolean,
@@ -6,6 +8,10 @@ export interface textInputProps {
     id?: string,
     name: string,
     placeholder: string
+}
+
+export interface RippleAbleProps {
+    style?: any
 }
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,4 +26,9 @@ export interface inputWrapperProps {
 
 export enum InputSize {
     Big,Medium, Small
+}
+
+export interface ModalProps {
+    open: Boolean,
+    close: MouseEventHandler<HTMLDivElement>
 }

@@ -28,6 +28,7 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly RazorLightEngine _razorLightEngine;
         private readonly IEventService _events;
         private readonly IIdentityServerInteractionService _interaction;
+        private readonly Captcha _captcha;
 
         public RegisterController(
             UserManager<ApplicationUser> userManager,
@@ -36,7 +37,8 @@ namespace VLO_BOARDS.Areas.Auth
             IEmailSender emailSender, 
             RazorLightEngine engine,
             IIdentityServerInteractionService interaction,
-            IEventService events)
+            IEventService events, 
+            Captcha captcha)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -45,6 +47,7 @@ namespace VLO_BOARDS.Areas.Auth
             _razorLightEngine = engine;
             _events = events;
             _interaction = interaction;
+            _captcha = captcha;
         }
 
         public class InputModel
@@ -69,6 +72,9 @@ namespace VLO_BOARDS.Areas.Auth
             [StringLength(20)]
             [DataType(DataType.Text)]
             public string Username { get; set; }
+            
+            [Required]
+            public string CaptchaResponse { get; set; }
         }
 
         /// <summary>
@@ -82,6 +88,12 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
         {
+            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) > 0.3)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+                return BadRequest(ModelState);
+            }
+            
             returnUrl ??= Url.Content("~/");
 
             //!= true for semantic reasons
@@ -91,48 +103,46 @@ namespace VLO_BOARDS.Areas.Auth
             }
 
             var ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            if (ModelState.IsValid)
+            var user = new ApplicationUser { UserName = Input.Username, Email = Input.Email };
+            
+            var result = await _userManager.CreateAsync(user, Input.Password);
+            if (result.Succeeded)
             {
-                var user = new ApplicationUser { UserName = Input.Username, Email = Input.Email };
-                var result = await _userManager.CreateAsync(user, Input.Password);
-                if (result.Succeeded)
+                _logger.LogInformation("User created a new account with password.");
+
+                var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                var callbackUrl = Url.RouteUrl(
+                    "/ConfirmEmail",
+                    values: new { userId = user.Id, code = code });
+
+                var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
+                    new {Link = callbackUrl})).Html;
+        
+                await _emailSender.SendEmailAsync(
+                    Input.Email,
+                    "Potwierdź swój adres email",
+                    body);
+                
+                return Ok(new RegistrationResult("ConfirmRegistration"));
+                
+                //Configuration will be ignored as unconfirmed email accounts are unsafe, legacy code below
+                /*
+                if (_userManager.Options.SignIn.RequireConfirmedAccount)
                 {
-                    _logger.LogInformation("User created a new account with password.");
-
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.RouteUrl(
-                        "/ConfirmEmail",
-                        values: new { userId = user.Id, code = code });
-
-                    var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
-                        new {Link = callbackUrl})).Html;
-            
-                    await _emailSender.SendEmailAsync(
-                        Input.Email,
-                        "Potwierdź swój adres email",
-                        body);
-                    
                     return Ok(new RegistrationResult("ConfirmRegistration"));
-                    
-                    //Configuration will be ignored as unconfirmed email accounts are unsafe, legacy code below
-                    /*
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return Ok(new RegistrationResult("ConfirmRegistration"));
-                    }
-                    else
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return Ok(new RegistrationResult("Redirect", true, returnUrl));
-                    }*/
                 }
-                foreach (var error in result.Errors)
+                else
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    return Ok(new RegistrationResult("Redirect", true, returnUrl));
+                }*/
             }
-            
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
             return BadRequest(ModelState);
         }
 

@@ -1,12 +1,14 @@
-import {FunctionComponent} from "react";
+import {FunctionComponent, useState} from "react";
 import styled from "styled-components";
 import vlobg from "./vlobg.png";
 import {Logo} from "../Logo";
 import {TextInput} from "../Components/Inputs/TextInput";
-import {InputSize} from "../Components/Inputs/Constants";
+import {InputSize} from "../Components/Constants";
 import {Form, FormikProvider, useFormik} from "formik";
 import * as Yup from 'yup';
 import {Button} from "../Components/Inputs/Button";
+import {RippleAble} from "../Components/Inputs/RippleAble";
+import {Modal} from "../Components/Modal";
 
 export const Login: FunctionComponent = (props) => {
     const Formik = useFormik(        {
@@ -20,8 +22,14 @@ export const Login: FunctionComponent = (props) => {
                 .min(8, "Hasło musi mieć co najmniej 8 znaków")
                 .matches(/\W/, "Hasło musi zawierać znak specjalny")
                 .matches(/\d/, "Hasło musi zawierać cyfrę")
+                .matches(/(.*[a-z].*)/, "Hasło musi zawierać co najmniej jedną małą literę")
+                .matches(/(.*[A-Z].*)/, "Hasło musi zawierać co najmniej jedną dużą literę")
         })
     });
+
+    const [modal, setModal] = useState(false);
+
+    console.log("modal open", modal);
 
     return (
         <Layout>
@@ -30,17 +38,20 @@ export const Login: FunctionComponent = (props) => {
                 <section>
                     <FormikProvider value={Formik}>
                         <Form>
+
                             <InputWrapper>
                                 <TextInput name="username" placeholder={"Nazwa użytkownika"} size={InputSize.Medium} />
                             </InputWrapper>
+
                             <InputWrapper>
                                 <TextInput name="password" password={true} placeholder={"Hasło"} size={InputSize.Medium} />
                             </InputWrapper>
                             <InputWrapper>
-                            <Button type="submit" size={InputSize.Medium}>Zaloguj się</Button>
+                            <Button onClick={() => setModal(!modal)} type="submit" size={InputSize.Medium}>Zaloguj się</Button>
                             </InputWrapper>
                         </Form>
                     </FormikProvider>
+                    <Modal open={modal} close={() => setModal(false)}>helo</Modal>
                 </section>
 
             </Container>

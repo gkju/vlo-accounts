@@ -4,10 +4,13 @@ import OIDCLogon from './OIDCLogon';
 import reportWebVitals from './reportWebVitals';
 import "./index.css";
 import { Provider } from 'react-redux';
+import Store from "./Redux/Store/Store";
 
 ReactDOM.render(
   <React.StrictMode>
+      <Provider store={Store}>
         <OIDCLogon />
+      </Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );

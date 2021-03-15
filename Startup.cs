@@ -40,6 +40,11 @@ namespace VLO_BOARDS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpClient();
+            
+            services.AddTransient<CaptchaCredentials>(x => new CaptchaCredentials(Configuration["CaptchaCredentials:PrivateKey"], Configuration["CaptchaCredentials:PublicKey"]));
+            services.AddTransient<Captcha>();
+            
             var appDbContextNPGSQLConnection = Configuration.GetConnectionString("NPGSQL");
             var is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;

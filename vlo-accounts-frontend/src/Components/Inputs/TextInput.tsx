@@ -1,6 +1,6 @@
 import {FunctionComponent, useState} from "react";
 import styled from "styled-components";
-import {InputSize, inputWrapperProps, textInputProps} from "./Constants";
+import {InputSize, inputWrapperProps, textInputProps} from "../Constants";
 import {useField} from "formik";
 import { motion } from "framer-motion";
 
@@ -33,8 +33,6 @@ export const TextInput: FunctionComponent<textInputProps> = (props: textInputPro
     const showFeedback = (!!focused && field.value.trim().length > 3) ||
         meta.touched;
 
-    console.log("new meta", meta, "field", field);
-
     return (
         <Wrapper>
         <InputWrapper size={props.size}>
@@ -59,8 +57,8 @@ const InputWrapper = styled("div")<inputWrapperProps>`
   display: flex;
   justify-content: center;
   position: relative;
-  width: ${props => props?.size == InputSize.Big ? 580 : props?.size == InputSize.Medium ? 435 : 290}px;
-  height: ${props => props?.size == InputSize.Big ? 120 : props?.size == InputSize.Medium ? 90 : 60}px;
+  width: ${props => props?.size === InputSize.Big ? 580 : props?.size === InputSize.Medium ? 435 : 290}px;
+  height: ${props => props?.size === InputSize.Big ? 120 : props?.size === InputSize.Medium ? 90 : 60}px;
 `
 
 const Label = styled("div")<{focused?: boolean, size?: InputSize}>`
@@ -76,7 +74,7 @@ const Label = styled("div")<{focused?: boolean, size?: InputSize}>`
   display: flex;
   justify-content: center;
   align-content: center;
-  font-size: ${props => props?.size == InputSize.Big ? 90 : props?.size == InputSize.Medium ? 40 : 25}px;
+  font-size: ${props => props?.size === InputSize.Big ? 90 : props?.size === InputSize.Medium ? 40 : 25}px;
   pointer-events: none;
 `
 
@@ -91,7 +89,7 @@ const NeumorphTextInput = styled.input<{hasValue: Boolean, size?: InputSize, err
   background: transparent;
   border: none;
   width: 100%;
-  font-size: ${props => props?.size == InputSize.Big ? 90 : props?.size == InputSize.Medium ? 40 : 25}px;
+  font-size: ${props => props?.size === InputSize.Big ? 90 : props?.size === InputSize.Medium ? 40 : 25}px;
   padding: 10px 20px;
   color: ${props => props.hasValue ? "rgba(180,180,180,0.6)" : "rgba(161,161,161,0.4)"};
   transition: all 0.2s linear;
