@@ -43,8 +43,8 @@ namespace VLO_BOARDS
                     ClientId = "VLO_BOARDS",
                     ClientName = "VLO_BOARDS",
                     AllowedGrantTypes = GrantTypes.Code,
-                    RedirectUris = { "https://localhost:44328/authentication/login-callback" },
-                    PostLogoutRedirectUris = { "https://localhost:44328/authentication/logout-callback" },
+                    RedirectUris = { "https://localhost:44328/login-callback" },
+                    PostLogoutRedirectUris = { "https://localhost:44328/logout-callback" },
                         AllowedScopes = new List<string>
                         {
                         IdentityServerConstants.StandardScopes.OpenId,

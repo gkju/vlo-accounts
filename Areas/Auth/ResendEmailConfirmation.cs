@@ -1,14 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using Fluid;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.WebUtilities;
-using RazorLight;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -19,13 +22,13 @@ namespace VLO_BOARDS.Areas.Auth
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
-        private readonly RazorLightEngine _razorLightEngine;
+        private readonly EmailTemplates _emailTemplates;
 
-        public ResendEmailConfirmationController(UserManager<ApplicationUser> userManager, IEmailSender emailSender, RazorLightEngine engine)
+        public ResendEmailConfirmationController(UserManager<ApplicationUser> userManager, IEmailSender emailSender, EmailTemplates emailTemplates)
         {
             _userManager = userManager;
             _emailSender = emailSender;
-            _razorLightEngine = engine;
+            _emailTemplates = emailTemplates;
         }
         
         public class InputModel
@@ -53,17 +56,14 @@ namespace VLO_BOARDS.Areas.Auth
             var userId = await _userManager.GetUserIdAsync(user);
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            var callbackUrl = Url.RouteUrl(
-                "/ConfirmEmail",
-                values: new { userId = userId, code = code });
             
-            var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
-                new {Link = callbackUrl})).Html;
+            var callbackUrl =
+                _emailTemplates.GenerateUrl("ConfirmEmail", new Dictionary<string, string> {{"code", code}, {"userId", user.Id}});
             
             await _emailSender.SendEmailAsync(
                 Input.Email,
                 "Potwierdź swój adres email",
-                body);
+                await _emailTemplates.RenderFluid("Email.liquid", new {Link = callbackUrl}));
 
             return Ok("Success");
         }

@@ -3,6 +3,7 @@ import styled from "styled-components";
 import {InputSize, inputWrapperProps, textInputProps} from "../Constants";
 import {useField} from "formik";
 import { motion } from "framer-motion";
+import {useMount} from "react-use";
 
 export const TextInput: FunctionComponent<textInputProps> = (props: textInputProps ) => {
     const [focused, setFocus] = useState(false);
@@ -36,7 +37,7 @@ export const TextInput: FunctionComponent<textInputProps> = (props: textInputPro
     return (
         <Wrapper>
         <InputWrapper size={props.size}>
-            <NeumorphTextInput {...field} error={showFeedback && !!meta.error} onKeyDown={(e) => handleDown(e)} onKeyUp={(e) => handleUp(e)} hasValue={!!field.value} size={props.size} onFocus={() => setFocus(true)} onBlur={() => {setFocus(false); helpers.setTouched(true)}} type={inputType} />
+            <NeumorphTextInput {...field} error={showFeedback && !!meta.error} onKeyDown={(e) => handleDown(e)} onKeyUp={(e) => handleUp(e)} hasValue={!!field.value} size={props.size} onFocus={() => setFocus(true)} onBlur={(e) => {setFocus(false); helpers.setTouched(true); field.onBlur(e); field.onChange(e);}} type={inputType} />
             <Label size={props.size} focused={(Boolean) (focused || field.value)}>
                 <InnerLabel>
                     {props.placeholder}

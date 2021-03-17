@@ -12,6 +12,13 @@ body, html {
     overflow: hidden;
 }
 
+input:-webkit-autofill::first-line {
+    font-family: Raleway, serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 36px;
+}
+
 * {
     -webkit-font-smoothing: subpixel-antialiased;
 }

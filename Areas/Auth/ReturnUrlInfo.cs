@@ -61,7 +61,7 @@ namespace VLO_BOARDS.Areas.Auth
             
             var returnUrlInfo = new ReturnUrlInfo();
 
-            if (_interaction.IsValidReturnUrl(Input.returnUrl) != true)
+            if (_interaction.IsValidReturnUrl(Input.returnUrl))
             {
                 var context = await _interaction.GetAuthorizationContextAsync(Input.returnUrl);
                 returnUrlInfo.clientInfo = true;

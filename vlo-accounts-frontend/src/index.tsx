@@ -3,15 +3,24 @@ import ReactDOM from 'react-dom';
 import OIDCLogon from './OIDCLogon';
 import reportWebVitals from './reportWebVitals';
 import "./index.css";
-import { Provider } from 'react-redux';
+import {BrowserRouter, Switch, Route} from "react-router-dom";
+import {LoginCallback} from "./Auth/LoginCallback";
 import Store from "./Redux/Store/Store";
+import {Provider} from "react-redux";
 
 ReactDOM.render(
-  <React.StrictMode>
-      <Provider store={Store}>
-        <OIDCLogon />
-      </Provider>
-  </React.StrictMode>,
+    <React.StrictMode>
+        <Provider store={Store}>
+        <BrowserRouter>
+            <Switch>
+                <Route path="/login-callback" component={LoginCallback} />
+                <Route path="/">
+                    <OIDCLogon />
+                </Route>
+            </Switch>
+        </BrowserRouter>
+        </Provider>
+    </React.StrictMode>,
   document.getElementById('root')
 );
 

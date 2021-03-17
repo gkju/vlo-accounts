@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using IdentityServer4.Services;
@@ -77,7 +78,7 @@ namespace VLO_BOARDS.Areas.Auth
             else if (result.IsLockedOut)
             {
                 _logger.LogWarning("User with ID '{UserId}' account locked out.", user.Id);
-                return Forbid("Locked Out");
+                return StatusCode((int) HttpStatusCode.Locked, "Locked Out");
             }
             else
             {
