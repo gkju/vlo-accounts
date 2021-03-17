@@ -38,7 +38,7 @@ export const Modal: FunctionComponent<ModalProps> = (props) => {
 
 
     // @ts-ignore
-    const domNode: Element = document.getElementById("root");
+    const domNode: Element = document.getElementById("modalRoot");
 
     return ReactDOM.createPortal(
         <AnimatePresence onExitComplete={shouldUnlockScroll}>

@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using IdentityServer4.Models;
 using IdentityServer4.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using RazorLight;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -25,7 +27,7 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly IEmailSender _emailSender;
         private readonly ILogger<ExternalLoginController> _logger;
         private readonly IIdentityServerInteractionService _interaction;
-        private readonly RazorLightEngine _razorLightEngine;
+        private readonly EmailTemplates _emailTemplates;
 
         public ExternalLoginController(
             SignInManager<ApplicationUser> signInManager,
@@ -33,14 +35,14 @@ namespace VLO_BOARDS.Areas.Auth
             ILogger<ExternalLoginController> logger,
             IEmailSender emailSender,
             IIdentityServerInteractionService interaction,
-            RazorLightEngine engine)
+            EmailTemplates emailTemplates)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
             _emailSender = emailSender;
             _interaction = interaction;
-            _razorLightEngine = engine;
+            _emailTemplates = emailTemplates;
         }
         
         /// <summary>
@@ -61,7 +63,7 @@ namespace VLO_BOARDS.Areas.Auth
             }
             
             // Request a redirect to the external login provider.
-            var redirectUrl = Url.RouteUrl("./ExternalLogin/Callback",  values: new { returnUrl });
+            var redirectUrl = _emailTemplates.GenerateUrl("Auth/ExternalLogin/Callback",  new Dictionary<string, string>() {{"returnUrl", returnUrl }}).ToString();
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
@@ -73,7 +75,7 @@ namespace VLO_BOARDS.Areas.Auth
         /// <param name="remoteError"></param>
         /// <returns>Redirects to pages</returns>
         [HttpGet]
-        [Route("[area]/[controller]/Callback")]
+        [Route("Callback")]
         public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -86,29 +88,43 @@ namespace VLO_BOARDS.Areas.Auth
             
             if (remoteError != null)
             {
-                return RedirectToPage("/Login", new {ReturnUrl = returnUrl, Error =  $"Błąd po stronie zewnętrznego dostawcy auth: {remoteError}"});
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Błąd po stronie zewnętrznego dostawcy auth: {remoteError}"}}).ToString();
+                return Redirect(redirectUrl);
             }
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                return RedirectToPage("/Login", new { ReturnUrl = returnUrl, Error =  $"Nie udało się zalogować przez zewnętrzne konto, ponieważ serwer nie dostał żadnej informacji o koncie" });
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Nie udało się zalogować przez zewnętrzne konto, ponieważ serwer nie dostał żadnej informacji o koncie"}}).ToString();
+                return Redirect(redirectUrl);
             }
 
             // Sign in the user with this external login provider if the user already has a login.
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor : false);
             if (result.Succeeded)
             {
+                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                
+                user.HandleExternalAuth(info);
+                
                 _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
                 return LocalRedirect(returnUrl);
             }
 
+            if (result.IsNotAllowed)
+            {
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Konto nie zostało potwierdzone (email) lub utraciłeś możliwość logowania się"}}).ToString();
+                return Redirect(redirectUrl);
+            }
+
             if (result.RequiresTwoFactor)
             {
-                return RedirectToPage("/Login", new { ReturnUrl = returnUrl, Prompt2FA = true });
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"prompt2Fa", "true"}}).ToString();
+                return Redirect(redirectUrl);
             }
             if (result.IsLockedOut)
             {
-                return RedirectToPage("/Lockout");
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", $"Po ostatniej nieudanej próbie logowania konto zostało zablokowane na 5 minut"}}).ToString();
+                return Redirect(redirectUrl);
             }
             else
             {
@@ -127,7 +143,9 @@ namespace VLO_BOARDS.Areas.Auth
                 }
                 
                 
-                return RedirectToPage("/RegisterExternalLogin", new {ReturnUrl = returnUrl, ProviderDisplayName = info.ProviderDisplayName, Email});
+                var redirectUrl = _emailTemplates.GenerateUrl("/RegisterExternalLogin", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"providerDisplayName", info.ProviderDisplayName}, {"email", Email}, {"username", Username} }).ToString();
+
+                return Redirect(redirectUrl);
             }
         }
         
@@ -138,7 +156,7 @@ namespace VLO_BOARDS.Areas.Auth
         /// <param name="returnUrl"></param>
         /// <returns>Bad request with modelstate or ok success</returns>
         [HttpPost]
-        [Route("[area]/[controller]/CreateAccount")]
+        [Route("CreateAccount")]
         public async Task<IActionResult> OnPostConfirmationAsync(InputModel Input, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -170,12 +188,10 @@ namespace VLO_BOARDS.Areas.Auth
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.RouteUrl(
-                        "/ConfirmEmail",
-                        values: new { userId = userId, code = code });
+                    var callbackUrl =
+                        _emailTemplates.GenerateUrl("ConfirmEmail", new Dictionary<string, string> {{"code", code}, {"userId", user.Id}});
 
-                    var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
-                        new {Link = callbackUrl})).Html;
+                    var body = await _emailTemplates.RenderFluid("Email.liquid", new {Link = callbackUrl});
             
                     await _emailSender.SendEmailAsync(
                         Input.Email,

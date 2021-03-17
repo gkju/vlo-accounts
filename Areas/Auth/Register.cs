@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -12,7 +13,6 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using RazorLight;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -25,29 +25,29 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<RegisterController> _logger;
         private readonly IEmailSender _emailSender;
-        private readonly RazorLightEngine _razorLightEngine;
         private readonly IEventService _events;
         private readonly IIdentityServerInteractionService _interaction;
         private readonly Captcha _captcha;
+        private readonly EmailTemplates _emailTemplates;
 
         public RegisterController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterController> logger,
-            IEmailSender emailSender, 
-            RazorLightEngine engine,
+            IEmailSender emailSender,
             IIdentityServerInteractionService interaction,
             IEventService events, 
-            Captcha captcha)
+            Captcha captcha,
+            EmailTemplates emailTemplates)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
-            _razorLightEngine = engine;
             _events = events;
             _interaction = interaction;
             _captcha = captcha;
+            _emailTemplates = emailTemplates;
         }
 
         public class InputModel
@@ -88,7 +88,7 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
         {
-            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) > 0.3)
+            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) < 0.3)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
@@ -112,17 +112,15 @@ namespace VLO_BOARDS.Areas.Auth
 
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                var callbackUrl = Url.RouteUrl(
-                    "/ConfirmEmail",
-                    values: new { userId = user.Id, code = code });
 
-                var body = PreMailer.Net.PreMailer.MoveCssInline(await _razorLightEngine.CompileRenderAsync("Email.cshtml",
-                    new {Link = callbackUrl})).Html;
-        
+                var callbackUrl =
+                    _emailTemplates.GenerateUrl("ConfirmEmail", new Dictionary<string, string> {{"code", code}, {"userId", user.Id}});
+
                 await _emailSender.SendEmailAsync(
                     Input.Email,
                     "Potwierdź swój adres email",
-                    body);
+                    await _emailTemplates.RenderFluid("Email.liquid", new {Link = callbackUrl}));
+                    
                 
                 return Ok(new RegistrationResult("ConfirmRegistration"));
                 

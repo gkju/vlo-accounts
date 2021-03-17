@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Policy;
@@ -44,7 +45,7 @@ namespace VLO_BOARDS.Areas.Auth
         {
             [Required]
             [DataType(DataType.Text)]
-            public string UserName { get; set; }
+            public string Username { get; set; }
 
             [Required] 
             [DataType(DataType.Password)]
@@ -68,12 +69,14 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
         public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
         {
-            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) > 0.3)
+            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) < 0.3) 
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
             }
             
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
             
             returnUrl ??= Url.Content("~/");
@@ -84,7 +87,7 @@ namespace VLO_BOARDS.Areas.Auth
                 returnUrl = Url.Content("~/");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(Input.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+            var result = await _signInManager.PasswordSignInAsync(Input.Username, Input.Password, Input.RememberMe, lockoutOnFailure: true);
             
             if (result.Succeeded)
             {
@@ -97,7 +100,7 @@ namespace VLO_BOARDS.Areas.Auth
             }
             if (result.IsLockedOut)
             {
-                return Forbid("Locked Out");
+                return StatusCode((int) HttpStatusCode.Locked, "Locked Out");
             }
             else
             {

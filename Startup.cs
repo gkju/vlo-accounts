@@ -15,14 +15,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using RazorLight;
 using VLO_BOARDS.Auth;
 using System.Linq;
+using System.Threading.Tasks;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using IdentityServer4.Configuration;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 
 namespace VLO_BOARDS
@@ -37,18 +38,34 @@ namespace VLO_BOARDS
 
         public IConfiguration Configuration { get; }
 
+        public class DummySender : IEmailSender
+        {
+            public Task SendEmailAsync(string email, string subject, string htmlMessage)
+            {
+                Console.WriteLine(email + subject + htmlMessage);
+
+                return Task.CompletedTask;
+            }
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddHttpClient();
-            
-            services.AddTransient<CaptchaCredentials>(x => new CaptchaCredentials(Configuration["CaptchaCredentials:PrivateKey"], Configuration["CaptchaCredentials:PublicKey"]));
-            services.AddTransient<Captcha>();
-            
+            var googleClientId = Configuration["GoogleAuth:ClientId"];
+            var googleSecret = Configuration["GoogleAuth:SecretKey"];
             var appDbContextNPGSQLConnection = Configuration.GetConnectionString("NPGSQL");
             var is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
             
+            
+            services.AddHttpClient();
+            services.AddScoped<EmailTemplates>();
+            
+            services.AddTransient<CaptchaCredentials>(x => new CaptchaCredentials(Configuration["CaptchaCredentials:PrivateKey"], Configuration["CaptchaCredentials:PublicKey"]));
+            services.AddTransient<Captcha>();
+            //dummy
+            services.AddScoped<IEmailSender, DummySender>();
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(appDbContextNPGSQLConnection, sql => sql.MigrationsAssembly(migrationsAssembly)));
             services.AddDbContext<ConfigurationDbContext>(options =>
@@ -85,6 +102,7 @@ namespace VLO_BOARDS
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddErrorDescriber<Internationalization.PolishIdentityErrorDescriber>()
                 .AddDefaultTokenProviders();
             
             services.Configure<IdentityOptions>(options =>
@@ -100,7 +118,7 @@ namespace VLO_BOARDS
             services.Configure<IdentityOptions>(options =>
             {
                 options.User.AllowedUserNameCharacters =
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+&*()";
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+&*() ";
                 options.User.RequireUniqueEmail = true;
             });
 
@@ -152,25 +170,35 @@ namespace VLO_BOARDS
                 configuration.RootPath = "vlo-accounts-frontend/build";
             });
 
-            //razor light instead of razor since it's built for rendering loose cshtml files + the whole app should not be dependent on any razor engine besides razor light so razor can be dumped all together in the near future
-            services.AddSingleton<RazorLightEngine>(x =>
-            {
-                string razorTemplateDir = Configuration.GetSection("RazorLightTemplateDirs").Get<string>();
-                var templateEngine = new RazorLightEngineBuilder()
-                    .UseFileSystemProject(razorTemplateDir)
-                    .UseMemoryCachingProvider()
-                    .Build();
-                return templateEngine;
-            });
-            
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            services.AddAuthentication();
+            services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleSecret;
+                    options.SaveTokens = true;
+                    options.AccessType = "offline";
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public async void Configure(IApplicationBuilder app, IWebHostEnvironment env, Features features)
         {
-            app.UseCookiePolicy(new CookiePolicyOptions { MinimumSameSitePolicy = SameSiteMode.Strict });
+            if (env.IsDevelopment())
+            {
+                app.UseCookiePolicy(new CookiePolicyOptions
+                {
+                    MinimumSameSitePolicy = SameSiteMode.None
+                });
+            }
+            else
+            {
+                app.UseCookiePolicy(new CookiePolicyOptions
+                {
+                    MinimumSameSitePolicy = SameSiteMode.Strict
+                });
+            }
+            
             InitializeDatabase(app, new Config(env));
 
             if (env.IsDevelopment())

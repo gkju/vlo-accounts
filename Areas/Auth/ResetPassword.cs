@@ -55,7 +55,7 @@ namespace VLO_BOARDS.Areas.Auth
         /// <returns>Either ok success or bad request with modelstate</returns>
         [HttpPost]
         public async Task<ActionResult<string>> OnPostAsync(InputModel Input) {
-            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) > 0.3)
+            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) < 0.3)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
