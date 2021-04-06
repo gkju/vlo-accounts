@@ -34,7 +34,7 @@ export const RippleAble: FunctionComponent<RippleAbleProps> = (props) => {
     }
 
     return (
-        <Wrapper onPointerDown={handleDown} onPointerOut={handleUpOrLeave}>
+        <Wrapper onPointerDown={handleDown} onPointerOut={handleUpOrLeave} onPointerUp={handleUpOrLeave}>
             {props.children}
             <WrapperInner style={props.style}>
                 <AnimatePresence>
