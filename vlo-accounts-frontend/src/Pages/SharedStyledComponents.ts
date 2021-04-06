@@ -26,6 +26,7 @@ export const InputWrapper = styled.div`
   justify-content: center;
   align-content: center;
   margin: 45px 0;
+  touch-action: manipulation;
 `
 
 export const ErrorSpan = styled.div`

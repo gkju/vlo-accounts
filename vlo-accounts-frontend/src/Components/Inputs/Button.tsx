@@ -1,7 +1,6 @@
-import {FunctionComponent, useState} from "react";
+import {FunctionComponent} from "react";
 import {ButtonProps, InputSize} from "../Constants";
-import {AnimatePresence, motion} from "framer-motion";
-import styled, {keyframes} from "styled-components";
+import styled from "styled-components";
 import {RippleAble} from "./RippleAble";
 
 export const Button: FunctionComponent<ButtonProps> = (props) => {
@@ -10,7 +9,7 @@ export const Button: FunctionComponent<ButtonProps> = (props) => {
         <RippleAble style={{borderRadius: "20px"}}>
             <StyledButton {...props} type={props.type}>
                 <TextWrapper>
-                {props.children}
+                    {props.children}
                 </TextWrapper>
             </StyledButton>
         </RippleAble>
@@ -33,7 +32,8 @@ const StyledButton = styled("button")<ButtonProps>`
   position: relative;
   overflow: hidden;
   transition: all 200ms ease;
-  
+  -webkit-tap-highlight-color: transparent;
+
   &:hover {
     outline: none;
     border: none;
