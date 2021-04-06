@@ -8,12 +8,27 @@ type Ripple = {
     styles: any
 }
 
-
-//finally rippleable component that works :DDDDD, took 1h
 export const RippleAble: FunctionComponent<RippleAbleProps> = (props) => {
     let arr: Ripple[] = [];
     const [ripples, setRipples] = useState(arr);
     const [lastKey, setLastKey] = useState(0);
+
+    const handleTapDown = (e: any) => {
+        try {
+            e.stopPropagation();
+        } catch (e) {
+
+        }
+        const target = e.currentTarget;
+        const maxDim = Math.max(target.clientWidth, target.clientHeight);
+        const styles: any = {};
+        styles.left = `${e.touches[0].clientX - target.offsetLeft - maxDim/2}px`;
+        styles.top = `${e.touches[0].clientY - target.offsetTop - maxDim/2}px`;
+        styles.width = styles.height = maxDim;
+        const key = lastKey + 1;
+        setLastKey(key + 1);
+        setRipples([...(ripples ?? []), {key, styles}]);
+    }
 
     const handleDown = (e: any) => {
         const target = e.currentTarget;
@@ -24,10 +39,18 @@ export const RippleAble: FunctionComponent<RippleAbleProps> = (props) => {
         styles.width = styles.height = maxDim;
         const key = lastKey + 1;
         setLastKey(key + 1);
-        setRipples([...(ripples ?? []), {key, styles} as Ripple]);
+        setRipples([...(ripples ?? []), {key, styles}]);
     }
 
     const handleUpOrLeave = (e: any) => {
+        try {
+            e.stopPropagation();
+            if(e.cancelable) {
+                e.preventDefault();
+            }
+        } catch (e) {
+
+        }
         let ripples2: Ripple[] = [...ripples];
         if(ripples2.length > 0) {
             ripples2.shift();
@@ -36,16 +59,16 @@ export const RippleAble: FunctionComponent<RippleAbleProps> = (props) => {
     }
 
     return (
-        <Wrapper onMouseDown={handleDown} onMouseUp={handleUpOrLeave} onMouseLeave={handleUpOrLeave}>
+        <Wrapper onTouchStart={handleTapDown} onTouchEnd={handleUpOrLeave} onMouseDown={handleDown} onMouseUp={handleUpOrLeave} onMouseLeave={handleUpOrLeave}>
             {props.children}
             <WrapperInner style={props.style}>
-            <AnimatePresence>
-                {ripples.map((ripple) => (
-                    <motion.div key={ripple.key} initial={{opacity: 1}} exit={{opacity: 0}}>
-                        <RippleCircle style={ripple.styles} />
-                    </motion.div>
-                ))}
-            </AnimatePresence>
+                <AnimatePresence>
+                    {ripples.map((ripple) => (
+                        <motion.div key={ripple.key} initial={{opacity: 1}} exit={{opacity: 0}}>
+                            <RippleCircle style={ripple.styles} />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </WrapperInner>
         </Wrapper>
     )
@@ -63,6 +86,7 @@ const WrapperInner = styled.div`
   height: 100%;
   transform: translateY(-100%);
   pointer-events: none;
+  touch-action: manipulation;
 `
 
 const rippleKeyframes = keyframes`
