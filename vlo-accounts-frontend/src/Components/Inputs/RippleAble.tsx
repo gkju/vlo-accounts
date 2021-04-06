@@ -14,11 +14,6 @@ export const RippleAble: FunctionComponent<RippleAbleProps> = (props) => {
     const [lastKey, setLastKey] = useState(0);
 
     const handleTapDown = (e: any) => {
-        try {
-            e.stopPropagation();
-        } catch (e) {
-
-        }
         const target = e.currentTarget;
         const maxDim = Math.max(target.clientWidth, target.clientHeight);
         const styles: any = {};
@@ -44,7 +39,6 @@ export const RippleAble: FunctionComponent<RippleAbleProps> = (props) => {
 
     const handleUpOrLeave = (e: any) => {
         try {
-            e.stopPropagation();
             if(e.cancelable) {
                 e.preventDefault();
             }
