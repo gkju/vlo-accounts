@@ -43,8 +43,8 @@ namespace VLO_BOARDS
                     ClientId = "VLO_BOARDS",
                     ClientName = "VLO_BOARDS",
                     AllowedGrantTypes = GrantTypes.Code,
-                    RedirectUris = { "https://localhost:44328/login-callback" },
-                    PostLogoutRedirectUris = { "https://localhost:44328/logout-callback" },
+                    RedirectUris = { "https://localhost:5001/login-callback" },
+                    PostLogoutRedirectUris = { "https://localhost:5001/logout-callback" },
                         AllowedScopes = new List<string>
                         {
                         IdentityServerConstants.StandardScopes.OpenId,
@@ -55,7 +55,7 @@ namespace VLO_BOARDS
                         RequireClientSecret = false,
                         ClientSecrets = new List<Secret> {},
                     AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
-                    AllowedCorsOrigins = new List<string>() {"https://localhost:44328", "http://localhost:44328"}
+                    AllowedCorsOrigins = new List<string>() {"https://localhost:5001", "http://localhost:5001"}
                 },
                 new Client
                 {

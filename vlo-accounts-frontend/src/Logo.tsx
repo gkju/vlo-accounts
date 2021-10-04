@@ -4,7 +4,7 @@ import styled from "styled-components";
 export const Logo: FunctionComponent = (props) => {
     return (
         <LogoSection>
-            <BigLogoPart>VLO</BigLogoPart>
+            <BigLogoPart>V</BigLogoPart>
             <SubLogoPart>Accounts</SubLogoPart>
         </LogoSection>
     )

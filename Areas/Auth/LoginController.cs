@@ -18,7 +18,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class LoginController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -40,36 +40,18 @@ namespace VLO_BOARDS.Areas.Auth
             _interaction = interaction;
             _captcha = captcha;
         }
-        
-        public class InputModel
-        {
-            [Required]
-            [DataType(DataType.Text)]
-            public string Username { get; set; }
-
-            [Required] 
-            [DataType(DataType.Password)]
-            public string Password { get; set; }
-
-            [Required]
-            [Display(Name = "Zapamiętaj mnie")]
-            public bool RememberMe { get; set; }
-            
-            [Required]
-            public string CaptchaResponse { get; set; }
-        }
 
         /// <summary>
         /// Endpoint used to log user in based on username, password
         /// </summary>
-        /// <param name="Input"></param>
+        /// <param name="loginInput"></param>
         /// <param name="returnUrl"></param>
         /// <returns>Ok login result, unprocessable entity (2fa required), forbidden or bad request with model state</returns>
         [HttpPost]
         [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
-        public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(LoginInputModel loginInput, string returnUrl = null)
         {
-            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) < 0.3) 
+            if (await _captcha.verifyCaptcha(loginInput.CaptchaResponse) < 0.5) 
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
@@ -87,7 +69,7 @@ namespace VLO_BOARDS.Areas.Auth
                 returnUrl = Url.Content("~/");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(Input.Username, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+            var result = await _signInManager.PasswordSignInAsync(loginInput.Username, loginInput.Password, loginInput.RememberMe, lockoutOnFailure: true);
             
             if (result.Succeeded)
             {
@@ -118,6 +100,24 @@ namespace VLO_BOARDS.Areas.Auth
 
             return Ok();
         }
+    }
+    
+    public class LoginInputModel
+    {
+        [Required]
+        [DataType(DataType.Text)]
+        public string Username { get; set; }
+
+        [Required] 
+        [DataType(DataType.Password)]
+        public string Password { get; set; }
+
+        [Required]
+        [Display(Name = "Zapamiętaj mnie")]
+        public bool RememberMe { get; set; }
+            
+        [Required]
+        public string CaptchaResponse { get; set; }
     }
     
     public class LoginResult

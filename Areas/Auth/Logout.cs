@@ -11,7 +11,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class LogoutController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;

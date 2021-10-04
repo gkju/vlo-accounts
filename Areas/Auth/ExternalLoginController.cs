@@ -9,6 +9,7 @@ using AccountsData.Models.DataModels;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class ExternalLoginController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -63,7 +64,7 @@ namespace VLO_BOARDS.Areas.Auth
             }
             
             // Request a redirect to the external login provider.
-            var redirectUrl = _emailTemplates.GenerateUrl("Auth/ExternalLogin/Callback",  new Dictionary<string, string>() {{"returnUrl", returnUrl }}).ToString();
+            var redirectUrl = _emailTemplates.GenerateUrl("api/Auth/ExternalLogin/Callback",  new Dictionary<string, string>() {{"returnUrl", returnUrl }}).ToString();
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
@@ -88,7 +89,7 @@ namespace VLO_BOARDS.Areas.Auth
             
             if (remoteError != null)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Błąd po stronie zewnętrznego dostawcy auth: {remoteError}"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Błąd zewnętrzny: {remoteError}"}}).ToString();
                 return Redirect(redirectUrl);
             }
             var info = await _signInManager.GetExternalLoginInfoAsync();
@@ -112,7 +113,7 @@ namespace VLO_BOARDS.Areas.Auth
 
             if (result.IsNotAllowed)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Konto nie zostało potwierdzone (email) lub utraciłeś możliwość logowania się"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"unconfirmed/deleted account"}}).ToString();
                 return Redirect(redirectUrl);
             }
 
@@ -123,7 +124,7 @@ namespace VLO_BOARDS.Areas.Auth
             }
             if (result.IsLockedOut)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", $"Po ostatniej nieudanej próbie logowania konto zostało zablokowane na 5 minut"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", $"locked out"}}).ToString();
                 return Redirect(redirectUrl);
             }
             else
@@ -152,12 +153,12 @@ namespace VLO_BOARDS.Areas.Auth
         /// <summary>
         /// Endpoint used for creating accounts when there's no account associated with external login
         /// </summary>
-        /// <param name="Input"></param>
+        /// <param name="externalLoginRegisterInput"></param>
         /// <param name="returnUrl"></param>
         /// <returns>Bad request with modelstate or ok success</returns>
         [HttpPost]
         [Route("CreateAccount")]
-        public async Task<IActionResult> OnPostConfirmationAsync(InputModel Input, string returnUrl = null)
+        public async Task<IActionResult> OnPostConfirmationAsync(ExternalLoginRegisterInputModel externalLoginRegisterInput, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             
@@ -171,13 +172,14 @@ namespace VLO_BOARDS.Areas.Auth
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                ModelState.AddModelError(string.Empty, "Brak informacji o zewnętrznym dostawcy auth");
+                ModelState.AddModelError(string.Empty, "Błąd zewnętrzny");
                 return BadRequest(ModelState);
             }
             
-            var user = new ApplicationUser { UserName = Input.Username, Email = Input.Email };
+            var user = new ApplicationUser { UserName = externalLoginRegisterInput.Username, Email = externalLoginRegisterInput.Email };
 
             var result = await _userManager.CreateAsync(user);
+            
             if (result.Succeeded)
             {
                 result = await _userManager.AddLoginAsync(user, info);
@@ -194,7 +196,7 @@ namespace VLO_BOARDS.Areas.Auth
                     var body = await _emailTemplates.RenderFluid("Email.liquid", new {Link = callbackUrl});
             
                     await _emailSender.SendEmailAsync(
-                        Input.Email,
+                        externalLoginRegisterInput.Email,
                         "Potwierdź swój adres email",
                         body);
 
@@ -209,16 +211,16 @@ namespace VLO_BOARDS.Areas.Auth
 
             return BadRequest(ModelState);
         }
-        
-        public class InputModel
-        {
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
+    }
+    
+    public class ExternalLoginRegisterInputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
             
-            [Required]
-            [DataType(DataType.Text)]
-            public string Username { get; set; }
-        }
+        [Required]
+        [DataType(DataType.Text)]
+        public string Username { get; set; }
     }
 }

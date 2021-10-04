@@ -1,5 +1,5 @@
 import {Fragment, FunctionComponent, ReactPropTypes} from "react";
-import {Route} from "react-router-dom";
+import {Routes, Route, Navigate} from "react-router-dom";
 import {Login} from "./Pages/Login";
 import {RegisterExternalLogin} from "./Pages/RegisterExternalLogin";
 
@@ -10,9 +10,10 @@ type RoutesProps = {
 export const UnAuthedRoutes: FunctionComponent<RoutesProps> = (props) => {
 
     return (
-        <Fragment>
-            <Route path="/Login" component={Login} />
-            <Route path="/RegisterExternalLogin" component={RegisterExternalLogin} />
-        </Fragment>
+        <Routes>
+            <Route path="/Login" element={<Login />} />
+            <Route path="/RegisterExternalLogin" element={<RegisterExternalLogin />} />
+            <Route path="*" element={<Navigate to="/Login" />} />
+        </Routes>
     )
 }

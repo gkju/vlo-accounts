@@ -1,6 +1,4 @@
 import {FunctionComponent, useState} from "react";
-import styled from "styled-components";
-import vlobg from "./vlobg.png";
 import {Logo} from "../Logo";
 import {TextInput} from "../Components/Inputs/TextInput";
 import {InputSize} from "../Components/Constants";
@@ -10,33 +8,42 @@ import {Button} from "../Components/Inputs/Button";
 import {motion} from "framer-motion";
 import {Modal} from "../Components/Modal";
 import {useMount} from "react-use";
-import axios from "axios";
-import {GoogleReCaptchaProvider, useGoogleReCaptcha} from "react-google-recaptcha-v3";
+import {useGoogleReCaptcha} from "react-google-recaptcha-v3";
 import qs from "qs";
 import {NavigateToReturnUrl} from "./ReturnUrlUtils";
 import {ReactComponent as GoogleLogo } from "./glogo.svg";
 import {Layout, ErrorSpan, InputWrapper, Container, Bg} from "./SharedStyledComponents";
+import {LoginApi} from "vlo-accounts-client";
+import {apiLocation, OpenApiSettings} from "../Config";
+import {GetReturnUrl} from "../Utils";
 
 const navigateGoogle = () => {
-    const queryParams = qs.parse(window.location.search.substr(1));
-    window.location.href = "/Auth/ExternalLogin?provider=Google&" + queryParams;
+    window.location.href = apiLocation + "/Auth/ExternalLogin?provider=Google" + (window.location.search.length > 1 ? "&" + window.location.search.substr(1) : "");
 }
 
 export const Login: FunctionComponent = (props) => {
-    const {executeRecaptcha} = useGoogleReCaptcha();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
-    const returnUrl = String(qs.parse(window.location.search.substr(1))["returnUrl"]);
-    const error = String(qs.parse(window.location.search.substr(1))["error"] || "");
+    const returnUrl = GetReturnUrl(window.location.search);
+    let error: string = String(qs.parse(window.location.search.substr(1))["error"]);
+
+    if(error === "undefined") {
+        error = "";
+    }
 
     const handleSubmit = async (values: FormikValues) => {
         setLoginError("");
-        const captchaResponse = await executeRecaptcha("login");
+        const captchaResponse = executeRecaptcha ? await executeRecaptcha("login") : "";
         try {
-            let response = await axios.post("/Auth/Login" + window.location.search, {userName: values.username, password: values.password, rememberMe: true, captchaResponse});
+            let loginApi = new LoginApi(OpenApiSettings);
+            let response = await loginApi.apiAuthLoginPost(GetReturnUrl(window.location.search), {username: values.username, password: values.password, rememberMe: true, captchaResponse});
+
             if(response.status === 200) {
                 await NavigateToReturnUrl(returnUrl);
+            } else {
+                throw response;
             }
-        } catch (res) {
+        } catch (res: any) {
             let response = res.response;
             if(response.status === 400) {
                 setLoginError(response.data[""][0]);
@@ -92,7 +99,7 @@ export const Login: FunctionComponent = (props) => {
                             </InputWrapper>
                             <InputWrapper style={{marginTop: "5px"}}>
                                 <ErrorSpan style={{zIndex: 1, margin: "0 0", maxWidth: "400px"}}>
-                                    <motion.span animate={{opacity: !!loginError ? 1 : 0}}>{loginError}</motion.span>
+                                    <motion.span animate={{opacity: loginError !== "" ? 1 : 0}}>{loginError}</motion.span>
                                 </ErrorSpan>
                             </InputWrapper>
                         </Form>

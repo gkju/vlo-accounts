@@ -15,7 +15,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class LoginWithRecoveryCodeController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -34,16 +34,8 @@ namespace VLO_BOARDS.Areas.Auth
             _events = events;
             _interaction = interaction;
         }
-        
-        public class InputModel
-        {
-            [Required]
-            [DataType(DataType.Text)]
-            [Display(Name = "Recovery Code")]
-            public string RecoveryCode { get; set; }
-        }
 
-        
+
         /// <summary>
         /// Logins user using 2fa recovery code
         /// </summary>
@@ -58,7 +50,7 @@ namespace VLO_BOARDS.Areas.Auth
         [HttpPost]
         [ProducesResponseType(typeof(LoginWithRecoveryCodeResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(LoginWithRecoveryCodeResult), StatusCodes.Status423Locked)]
-        public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(LoginWithRecoveryCodeInputModel loginWithRecoveryCodeInput, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             
@@ -74,7 +66,7 @@ namespace VLO_BOARDS.Areas.Auth
                 throw new InvalidOperationException($"Unable to load two-factor authentication user.");
             }
 
-            var recoveryCode = Input.RecoveryCode.Replace(" ", string.Empty);
+            var recoveryCode = loginWithRecoveryCodeInput.RecoveryCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
             var result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
 
@@ -99,6 +91,13 @@ namespace VLO_BOARDS.Areas.Auth
         }
     }
     
+    public class LoginWithRecoveryCodeInputModel
+    {
+        [Required]
+        [DataType(DataType.Text)]
+        [Display(Name = "Recovery Code")]
+        public string RecoveryCode { get; set; }
+    }
 
     public class LoginWithRecoveryCodeResult
     {

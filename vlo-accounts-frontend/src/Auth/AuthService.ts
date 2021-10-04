@@ -2,7 +2,7 @@ import {authoritySettings} from "../Config";
 import {UserManager} from "oidc-client";
 import Store from "../Redux/Store/Store";
 import { setLoggedIn, setLoggedOut } from "../Redux/Slices/Auth";
-import * as qs from "qs";
+import {EmptyObj} from "../Utils";
 
 export class AuthService {
     private userManager: any = undefined;
@@ -22,10 +22,8 @@ export class AuthService {
     async signInSilent() {
         await this.ensureUserManagerCreated();
         try {
-            console.log("attempting silent login");
-            let user = await this.userManager.signinSilent();
-            console.log("got user", user);
-            Store.dispatch(setLoggedIn(user.profile));
+            await this.userManager.signinSilent();
+            Store.dispatch(setLoggedIn({profile: (await this.userManager.getUser()).profile}));
         } catch(e) {
             console.error(e);
         }
@@ -34,24 +32,21 @@ export class AuthService {
     async processSignInUrl(url: string): Promise<boolean> {
         try {
             await this.ensureUserManagerCreated();
-            console.log("handling url", url);
-            const user = await this.userManager.signinCallback(url);
-            Store.dispatch(setLoggedIn(user.profile));
+            await this.userManager.signinCallback(url);
+            Store.dispatch(setLoggedIn({profile: (await this.userManager.getUser()).profile}));
             return true;
         } catch (error) {
-            //how did we get here
-            console.log('it brokey');
             return false;
         }
     }
 
     async GetToken() {
         await this.ensureUserManagerCreated();
-        return this.userManager.getUser().access_token;
+        return (await this.userManager.getUser())?.access_token || "";
     }
 
     onUserLoaded = (user: any) => {
-        Store.dispatch(setLoggedIn(user.profile));
+        Store.dispatch(setLoggedIn({profile: user.profile}));
     }
 
     onSilentRenewError = (error: any) => {
@@ -75,14 +70,6 @@ export class AuthService {
     }
 
     static get instance() { return authService }
-
-    public static getRedirectUrl(): string {
-        const redirectUrl = String(qs.parse(window.location.search.substr(1))["redirectUrl"]);
-        if (redirectUrl && !redirectUrl.startsWith(`${window.location.origin}/`)) {
-            throw new Error("Zły redirect url, potencjalnie open redirect attack")
-        }
-        return redirectUrl || `${window.location.origin}/`;
-    }
 }
 
 const authService = new AuthService();

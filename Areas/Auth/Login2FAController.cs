@@ -13,7 +13,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class Login2FAController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -26,31 +26,17 @@ namespace VLO_BOARDS.Areas.Auth
             _logger = logger;
             _interaction = interaction;
         }
-        
-        public class InputModel
-        {
-            [Required]
-            [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-            [DataType(DataType.Text)]
-            [Display(Name = "Authenticator code")]
-            public string TwoFactorCode { get; set; }
 
-            [Display(Name = "Remember this machine")]
-            public bool RememberMachine { get; set; }
-            
-            public bool RememberMe { get; set; }
-        }
-        
         /// <summary>
         /// Logs user in based on 2FA code
         /// </summary>
-        /// <param name="Input"></param>
+        /// <param name="login2FaInput"></param>
         /// <param name="returnUrl"></param>
         /// <returns>Either forbidden, bad request, ok login result or exception</returns>
         /// <exception cref="InvalidOperationException"></exception>
         [HttpPost]
         [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
-        public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(Login2FAInputModel login2FaInput, string returnUrl = null)
         {
             returnUrl = returnUrl ?? Url.Content("~/");
 
@@ -66,9 +52,9 @@ namespace VLO_BOARDS.Areas.Auth
                 throw new InvalidOperationException($"Unable to load two-factor authentication user.");
             }
 
-            var authenticatorCode = Input.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
+            var authenticatorCode = login2FaInput.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
-            var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, Input.RememberMe, Input.RememberMachine);
+            var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, login2FaInput.RememberMe, login2FaInput.RememberMachine);
 
             if (result.Succeeded)
             {
@@ -87,5 +73,19 @@ namespace VLO_BOARDS.Areas.Auth
                 return BadRequest(ModelState);
             }
         }
+    }
+    
+    public class Login2FAInputModel
+    {
+        [Required]
+        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Text)]
+        [Display(Name = "Authenticator code")]
+        public string TwoFactorCode { get; set; }
+
+        [Display(Name = "Remember this machine")]
+        public bool RememberMachine { get; set; }
+            
+        public bool RememberMe { get; set; }
     }
 }

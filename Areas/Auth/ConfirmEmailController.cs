@@ -9,7 +9,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class ConfirmEmailController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -19,29 +19,23 @@ namespace VLO_BOARDS.Areas.Auth
             _userManager = userManager;
         }
 
-        public class InputModel
-        {
-            public string userId { get; set; }
-            public string code { get; set; }
-        }
-
         /// <summary>
         /// Confirms email using provided userid and code
         /// </summary>
-        /// <param name="Input"></param>
+        /// <param name="confirmEmailInput"></param>
         /// <returns>Either notfound, ok success or bad request with model state</returns>
         [HttpPost]
-        public async Task<IActionResult> OnPostAsync(InputModel Input)
+        public async Task<IActionResult> OnPostAsync(ConfirmEmailInputModel confirmEmailInput)
         {
-            var user = await _userManager.FindByIdAsync(Input.userId);
+            var user = await _userManager.FindByIdAsync(confirmEmailInput.userId);
             
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{Input.userId}'.");
+                return NotFound($"Unable to load user with ID '{confirmEmailInput.userId}'.");
             }
 
-            Input.code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Input.code));
-            var result = await _userManager.ConfirmEmailAsync(user, Input.code);
+            confirmEmailInput.code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(confirmEmailInput.code));
+            var result = await _userManager.ConfirmEmailAsync(user, confirmEmailInput.code);
 
             if (result.Succeeded)
             {
@@ -52,5 +46,11 @@ namespace VLO_BOARDS.Areas.Auth
                 return BadRequest("Error confirming email");
             }
         }
+    }
+    
+    public class ConfirmEmailInputModel
+    {
+        public string userId { get; set; }
+        public string code { get; set; }
     }
 }

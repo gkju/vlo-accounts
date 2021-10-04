@@ -17,7 +17,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class ResendEmailConfirmationController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -30,23 +30,16 @@ namespace VLO_BOARDS.Areas.Auth
             _emailSender = emailSender;
             _emailTemplates = emailTemplates;
         }
-        
-        public class InputModel
-        {
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
-        }
-        
+
         /// <summary>
         /// Resends email confirmation
         /// </summary>
         /// <response code="200">Success</response>
         [HttpPost]
-        public async Task<IActionResult> OnPostAsync(InputModel Input)
+        public async Task<IActionResult> OnPostAsync(ResendEmailConfirmationInputModel resendEmailConfirmationInput)
         {
             
-            var user = await _userManager.FindByEmailAsync(Input.Email);
+            var user = await _userManager.FindByEmailAsync(resendEmailConfirmationInput.Email);
             if (user == null)
             {
                 //Do not reveal user doesn't exist
@@ -61,11 +54,18 @@ namespace VLO_BOARDS.Areas.Auth
                 _emailTemplates.GenerateUrl("ConfirmEmail", new Dictionary<string, string> {{"code", code}, {"userId", user.Id}});
             
             await _emailSender.SendEmailAsync(
-                Input.Email,
+                resendEmailConfirmationInput.Email,
                 "Potwierdź swój adres email",
                 await _emailTemplates.RenderFluid("Email.liquid", new {Link = callbackUrl}));
 
             return Ok("Success");
         }
+    }
+    
+    public class ResendEmailConfirmationInputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
     }
 }

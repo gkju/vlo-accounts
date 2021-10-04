@@ -230,4 +230,19 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
-/vlo-accounts-frontend/.yarn/
+
+# react
+vlo-accounts-frontend/.yarn
+vlo-accounts-frontend/node_modules
+vlo-accounts-frontend/.pnp
+vlo-accounts-frontend/.pnp.js
+vlo-accounts-frontend/coverage
+vlo-accounts-frontend/build
+vlo-accounts-frontend/.DS_Store
+vlo-accounts-frontend/.env.local
+vlo-accounts-frontend/.env.development.local
+vlo-accounts-frontend/.env.test.local
+vlo-accounts-frontend/.env.production.local
+vlo-accounts-frontend/npm-debug.log*
+vlo-accounts-frontend/yarn-debug.log*
+vlo-accounts-frontend/yarn-error.log*

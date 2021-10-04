@@ -1,6 +1,7 @@
 import {User} from "oidc-client";
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {RootState} from "../Store/Store";
+import {EmptyObj} from "../../Utils";
 
 
 interface authState {

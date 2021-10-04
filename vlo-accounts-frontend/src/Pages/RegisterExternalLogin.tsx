@@ -12,19 +12,26 @@ import {FunctionComponent, useState} from "react";
 import {Layout, ErrorSpan, InputWrapper, Container, Bg} from "./SharedStyledComponents";
 import qs from "qs";
 import * as Yup from 'yup';
+import { ExternalLoginApi} from "vlo-accounts-client";
+import {OpenApiSettings} from "../Config";
+import {GetReturnUrl} from "../Utils";
+import {Modal} from "../Components/Modal";
+import {useNavigate} from "react-router-dom";
 
 export const RegisterExternalLogin: FunctionComponent = (props) => {
-    const returnUrl = String(qs.parse(window.location.search.substr(1))["returnUrl"]);
+    const returnUrl = GetReturnUrl(window.location.search);
+    const navigate = useNavigate();
 
     const handleSubmit = async (values: FormikValues) => {
         setRegisterError("");
 
         try {
-            let response = await axios.post("/Auth/ExternalLogin/CreateAccount" + window.location.search, {username: values.username, email: values.email});
+            let externalLoginApi = new ExternalLoginApi(OpenApiSettings);
+            let response = await externalLoginApi.apiAuthExternalLoginCreateAccountPost(GetReturnUrl(window.location.search), {username: values.username, email: values.email});
             if(response.status === 200) {
-                await NavigateToReturnUrl(returnUrl);
+                setModal(true);
             }
-        } catch (res) {
+        } catch (res: any) {
             let response = res.response;
             if(response.status === 400) {
                 setRegisterError(response.data[""][0]);
@@ -46,6 +53,7 @@ export const RegisterExternalLogin: FunctionComponent = (props) => {
     });
 
     const [registerError, setRegisterError] = useState("");
+    const [modal, setModal] = useState(false);
 
     useMount(() => {
 
@@ -77,6 +85,7 @@ export const RegisterExternalLogin: FunctionComponent = (props) => {
                 </section>
             </Container>
             <Bg/>
+            <Modal open={modal} close={() => {setModal(false); navigate("/Login?" + qs.stringify({returnUrl: returnUrl}));}}>Potwierdź swój adres e-mail</Modal>
         </Layout>
     )
 }

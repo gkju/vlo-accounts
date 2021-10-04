@@ -29,13 +29,15 @@ namespace VLO_BOARDS
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             
             Configuration = configuration;
+            env = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment env { get; }
 
         public class DummySender : IEmailSender
         {
@@ -50,13 +52,22 @@ namespace VLO_BOARDS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var googleClientId = Configuration["GoogleAuth:ClientId"];
-            var googleSecret = Configuration["GoogleAuth:SecretKey"];
-            var appDbContextNPGSQLConnection = Configuration.GetConnectionString("NPGSQL");
-            var is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
-            var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+            string googleClientId = "";
+            string googleSecret = "";
+            string appDbContextNPGSQLConnection = "";
+            string is4DbContextNPGSQLConnection = "";
+            string migrationsAssembly = "";
+            byte[] pemBytes = {};
 
-            
+            if (env.IsDevelopment())
+            {
+                googleClientId = Configuration["GoogleAuth:ClientId"];
+                googleSecret = Configuration["GoogleAuth:SecretKey"];
+                appDbContextNPGSQLConnection = Configuration.GetConnectionString("NPGSQL");
+                is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
+                migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+                pemBytes = Convert.FromBase64String(@Configuration.GetSection("ISKeys:ECDSAPEM").Get<string>());
+            }
             
             services.AddHttpClient();
             services.AddScoped<EmailTemplates>();
@@ -133,6 +144,9 @@ namespace VLO_BOARDS
                     {
                         LogoutUrl = "/Logout",
                         LoginUrl = "/Login",
+                        ConsentUrl = "/Consent",
+                        DeviceVerificationUrl = "/VerifyDevice",
+                        ErrorUrl = "/IS4Error",
                         LoginReturnUrlParameter = "returnUrl"
                     };
                     
@@ -150,10 +164,7 @@ namespace VLO_BOARDS
                     b.UseNpgsql(is4DbContextNPGSQLConnection,
                         sql => sql.MigrationsAssembly(migrationsAssembly)))
                 .AddAspNetIdentity<ApplicationUser>();
-                
-
-
-            var pemBytes = Convert.FromBase64String(@Configuration.GetSection("ISKeys:ECDSAPEM").Get<string>());
+            
             var ecdsa = ECDsa.Create();
             ecdsa.ImportECPrivateKey(pemBytes, out _);
             var ecdsaKey = new ECDsaSecurityKey(ecdsa) {KeyId = "secp521r1key"};
@@ -161,13 +172,6 @@ namespace VLO_BOARDS
             is4Builder.AddSigningCredential(ecdsaKey, IdentityServerConstants.ECDsaSigningAlgorithm.ES512);
 
             services.AddControllersWithViews();
-            services.AddRazorPages();
-
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "vlo-accounts-frontend/build";
-            });
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             services.AddAuthentication()
@@ -226,8 +230,6 @@ namespace VLO_BOARDS
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseSpaStaticFiles();
             app.UseRouting();
             app.UseIdentityServer();
             app.UseAuthorization();
@@ -235,24 +237,16 @@ namespace VLO_BOARDS
             {
                 endpoints.MapControllerRoute(
                     name: "areas",
-                    pattern: "{area:exists}/{controller}/");
+                    pattern: "/api/{area:exists}/{controller}/");
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
-                endpoints.MapRazorPages();
+                    pattern: "/api/{controller}/{action=Index}/{id?}");
             });
 
-            
-            app.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer("http://localhost:3000"));
-            /*app.UseSpa(spa =>
+            if (env.IsDevelopment())
             {
-                spa.Options.SourcePath = "vlo-accounts-frontend";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });*/
+                app.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer("http://localhost:3000"));
+            }
         }
 
         private void InitializeDatabase(IApplicationBuilder app, Config config)

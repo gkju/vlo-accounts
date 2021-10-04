@@ -18,7 +18,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class RegisterController : ControllerBase
     {
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -50,45 +50,18 @@ namespace VLO_BOARDS.Areas.Auth
             _emailTemplates = emailTemplates;
         }
 
-        public class InputModel
-        {
-            [Required]
-            [EmailAddress]
-            [Display(Name = "Email")]
-            public string Email { get; set; }
-
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-            [DataType(DataType.Password)]
-            [Display(Name = "Password")]
-            public string Password { get; set; }
-
-            [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-            public string ConfirmPassword { get; set; }
-            
-            [Required]
-            [StringLength(20)]
-            [DataType(DataType.Text)]
-            public string Username { get; set; }
-            
-            [Required]
-            public string CaptchaResponse { get; set; }
-        }
-
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="Input"></param>
+        /// <param name="registerInput"></param>
         /// <param name="returnUrl"></param>
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(typeof(RegistrationResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> OnPostAsync(InputModel Input, string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(RegisterInputModel registerInput, string returnUrl = null)
         {
-            if (await _captcha.verifyCaptcha(Input.CaptchaResponse) < 0.3)
+            if (await _captcha.verifyCaptcha(registerInput.CaptchaResponse) < 0.3)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
@@ -103,9 +76,9 @@ namespace VLO_BOARDS.Areas.Auth
             }
 
             var ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            var user = new ApplicationUser { UserName = Input.Username, Email = Input.Email };
+            var user = new ApplicationUser { UserName = registerInput.Username, Email = registerInput.Email };
             
-            var result = await _userManager.CreateAsync(user, Input.Password);
+            var result = await _userManager.CreateAsync(user, registerInput.Password);
             if (result.Succeeded)
             {
                 _logger.LogInformation("User created a new account with password.");
@@ -117,7 +90,7 @@ namespace VLO_BOARDS.Areas.Auth
                     _emailTemplates.GenerateUrl("ConfirmEmail", new Dictionary<string, string> {{"code", code}, {"userId", user.Id}});
 
                 await _emailSender.SendEmailAsync(
-                    Input.Email,
+                    registerInput.Email,
                     "Potwierdź swój adres email",
                     await _emailTemplates.RenderFluid("Email.liquid", new {Link = callbackUrl}));
                     
@@ -144,6 +117,28 @@ namespace VLO_BOARDS.Areas.Auth
             return BadRequest(ModelState);
         }
 
+    }
+    
+    public class RegisterInputModel
+    {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "{0} musi mieć od {2} do {1} znaków.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        [DataType(DataType.Text)]
+        public string Username { get; set; }
+            
+        [Required]
+        public string CaptchaResponse { get; set; }
     }
     
     public class RegistrationResult

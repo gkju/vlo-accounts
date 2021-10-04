@@ -13,7 +13,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class ReturnUrlInfoController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -33,16 +33,7 @@ namespace VLO_BOARDS.Areas.Auth
             _interaction = interaction;
         }
 
-        public class InputModel
-        {
-            [Required]
-            [DataType(DataType.Url)]
-            public string returnUrl { get; set; }
-        }
-
-        
-
-        //R.I.P rest, I want it in the body!
+        // R.I.P rest, I want it in the body!
         /// <summary>
         /// Returns information about client associated with returnurl
         /// </summary>
@@ -56,14 +47,14 @@ namespace VLO_BOARDS.Areas.Auth
         [HttpPost]
         [ProducesResponseType(typeof(ReturnUrlInfo), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> OnPost(InputModel Input)
+        public async Task<IActionResult> OnPost(ReturnUrlInfoInputModel returnUrlInfoInput)
         {
             
             var returnUrlInfo = new ReturnUrlInfo();
 
-            if (_interaction.IsValidReturnUrl(Input.returnUrl))
+            if (_interaction.IsValidReturnUrl(returnUrlInfoInput.returnUrl))
             {
-                var context = await _interaction.GetAuthorizationContextAsync(Input.returnUrl);
+                var context = await _interaction.GetAuthorizationContextAsync(returnUrlInfoInput.returnUrl);
                 returnUrlInfo.clientInfo = true;
                 returnUrlInfo.clientName = context.Client?.ClientName;
                 returnUrlInfo.clientUri = context.Client?.ClientUri;
@@ -72,14 +63,21 @@ namespace VLO_BOARDS.Areas.Auth
             }
             else
             {
-                Input.returnUrl = Url.Content("~/");
-                returnUrlInfo.safeReturnUrl = Input.returnUrl;
+                returnUrlInfoInput.returnUrl = Url.Content("~/");
+                returnUrlInfo.safeReturnUrl = returnUrlInfoInput.returnUrl;
                 returnUrlInfo.validReturnUrl = false;
                 returnUrlInfo.clientInfo = false;
             }
             
             return Ok(returnUrlInfo);
         }
+    }
+    
+    public class ReturnUrlInfoInputModel
+    {
+        [Required]
+        [DataType(DataType.Url)]
+        public string returnUrl { get; set; }
     }
     
     public class ReturnUrlInfo 

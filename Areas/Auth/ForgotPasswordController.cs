@@ -14,7 +14,7 @@ namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
-    [Route("[area]/[controller]")]
+    [Route("api/[area]/[controller]")]
     public class ForgotPasswordController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -26,25 +26,18 @@ namespace VLO_BOARDS.Areas.Auth
             _userManager = userManager;
             _emailSender = emailSender;
             _emailTemplates = emailTemplates;
-        }  
-        
-        public class InputModel
-        {
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
         }
 
         /// <summary>
         /// Sends password reset email based on given email
         /// </summary>
-        /// <param name="Input"></param>
+        /// <param name="forgotPasswordInput"></param>
         /// <returns>Ok success or bad request with model state</returns>
         [HttpPost]
-        public async Task<IActionResult> OnPostAsync(InputModel Input)
+        public async Task<IActionResult> OnPostAsync(ForgotPasswordInputModel forgotPasswordInput)
         {
 
-                var user = await _userManager.FindByEmailAsync(Input.Email);
+                var user = await _userManager.FindByEmailAsync(forgotPasswordInput.Email);
                 if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
                 {
                     // Don't reveal that the user does not exist or is not confirmed
@@ -60,11 +53,18 @@ namespace VLO_BOARDS.Areas.Auth
                 var body = await _emailTemplates.RenderFluid("ResetPassword.liquid", new {Link = callbackUrl});
 
                 await _emailSender.SendEmailAsync(
-                    Input.Email,
+                    forgotPasswordInput.Email,
                     "Zresetuj swoje hasło",
                     body);
 
                 return Ok("Success");
         }
+    }
+    
+    public class ForgotPasswordInputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
     }
 }
