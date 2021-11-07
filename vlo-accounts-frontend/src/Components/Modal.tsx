@@ -19,7 +19,7 @@ export const Modal: FunctionComponent<ModalProps> = (props) => {
         const modals = document.querySelectorAll(".Modal");
         let html = document.querySelector("html");
 
-        if(modals.length == 0 && html !== null) {
+        if(modals.length === 0 && html !== null) {
             html.classList.remove("locked");
         }
     }
@@ -31,9 +31,9 @@ export const Modal: FunctionComponent<ModalProps> = (props) => {
     }
 
     const modalVariants = {
-        exit: {top: "150%", transition: {type: "string"}},
+        exit: {top: "150%", transition: {type: "spring"}},
         open: {top: "50%"},
-        initial: {top: "-50%", transition: {type: "string", velocity: 2}}
+        initial: {top: "-50%", transition: {type: "spring", velocity: 2}}
     }
 
 

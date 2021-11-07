@@ -3,7 +3,6 @@ import styled from "styled-components";
 import {InputSize, inputWrapperProps, textInputProps} from "../Constants";
 import {useField} from "formik";
 import { motion } from "framer-motion";
-import {useMount} from "react-use";
 
 export const TextInput: FunctionComponent<textInputProps> = (props: textInputProps ) => {
     const [focused, setFocus] = useState(false);
@@ -15,7 +14,7 @@ export const TextInput: FunctionComponent<textInputProps> = (props: textInputPro
 
     const handleUp = (e: any) => {
         if(!!props.password) {
-            if(e.key = "Control") {
+            if(e.key === "Alt") {
                 e.preventDefault();
                 setShow(false);
             }
@@ -24,20 +23,27 @@ export const TextInput: FunctionComponent<textInputProps> = (props: textInputPro
 
     const handleDown = (e: any) => {
         if(!!props.password) {
-            if(e.ctrlKey) {
+            if(e.altKey) {
                 e.preventDefault();
                 setShow(true);
             }
         }
     }
 
-    const showFeedback = (!!focused && field.value.trim().length > 3) ||
-        meta.touched;
+    const handleBlur = (e: any) => {
+        setFocus(false);
+        helpers.setTouched(true);
+        field.onBlur(e);
+        field.onChange(e);
+        setShow(false);
+    }
+
+    const showFeedback = (focused && field.value.trim().length > 3) || meta.touched;
 
     return (
         <Wrapper>
         <InputWrapper size={props.size}>
-            <NeumorphTextInput {...field} error={showFeedback && !!meta.error} onKeyDown={(e) => handleDown(e)} onKeyUp={(e) => handleUp(e)} hasValue={!!field.value} size={props.size} onFocus={() => setFocus(true)} onBlur={(e) => {setFocus(false); helpers.setTouched(true); field.onBlur(e); field.onChange(e);}} type={inputType} />
+            <NeumorphTextInput {...field} error={showFeedback && !!meta.error} onKeyDown={handleDown} onKeyUp={handleUp} hasValue={!!field.value} size={props.size} onFocus={() => setFocus(true)} onBlur={handleBlur} type={inputType} />
             <Label size={props.size} focused={(Boolean) (focused || field.value)}>
                 <InnerLabel>
                     {props.placeholder}
@@ -53,7 +59,7 @@ export const TextInput: FunctionComponent<textInputProps> = (props: textInputPro
 
 const InputWrapper = styled("div")<inputWrapperProps>`
   background: #1D1D28;
-  box-shadow: inset 0px 0px 30px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 30px 5px rgba(0, 0, 0, 0.5);
   border-radius: 30px;
   display: flex;
   justify-content: center;
