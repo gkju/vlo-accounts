@@ -58,6 +58,8 @@ namespace VLO_BOARDS
             string is4DbContextNPGSQLConnection = "";
             string migrationsAssembly = "";
             byte[] pemBytes = {};
+            string captchaKey = "";
+            string captchaPK = "";
 
             if (env.IsDevelopment())
             {
@@ -67,15 +69,19 @@ namespace VLO_BOARDS
                 is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
                 migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
                 pemBytes = Convert.FromBase64String(@Configuration.GetSection("ISKeys:ECDSAPEM").Get<string>());
+                captchaPK = Configuration["CaptchaCredentials:PrivateKey"];
+                captchaKey = Configuration["CaptchaCredentials:PublicKey"];
+                services.AddDatabaseDeveloperPageExceptionFilter();
+                services.AddScoped<IEmailSender, DummySender>();
             }
             
             services.AddHttpClient();
             services.AddScoped<EmailTemplates>();
             
-            services.AddTransient<CaptchaCredentials>(x => new CaptchaCredentials(Configuration["CaptchaCredentials:PrivateKey"], Configuration["CaptchaCredentials:PublicKey"]));
+            services.AddTransient<CaptchaCredentials>(x => new CaptchaCredentials(captchaPK, captchaKey));
             services.AddTransient<Captcha>();
-            //dummy
-            services.AddScoped<IEmailSender, DummySender>();
+
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(appDbContextNPGSQLConnection, sql => sql.MigrationsAssembly(migrationsAssembly)));
             services.AddDbContext<ConfigurationDbContext>(options =>
@@ -106,9 +112,6 @@ namespace VLO_BOARDS
 
             services.AddTransient<Features>(x => new Features
                 {SwaggerEnabled = Configuration.GetValue<bool>("Features:Swagger")});
-            
-            
-            services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -172,8 +175,7 @@ namespace VLO_BOARDS
             is4Builder.AddSigningCredential(ecdsaKey, IdentityServerConstants.ECDsaSigningAlgorithm.ES512);
 
             services.AddControllersWithViews();
-
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+            
             services.AddAuthentication()
                 .AddGoogle(options =>
                 {

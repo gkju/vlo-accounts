@@ -9,8 +9,8 @@ namespace VLO_BOARDS.Auth
     {
         private const string Name = "libsodium";
         public const int crypto_pwhash_argon2id_ALG_ARGON2ID13 = 2;
-        public const long crypto_pwhash_argon2id_OPSLIMIT_SENSITIVE = 4;
-        public const int crypto_pwhash_argon2id_MEMLIMIT_SENSITIVE = 273741824;
+        public const long crypto_pwhash_argon2id_OPSLIMIT = 4;
+        public const int crypto_pwhash_argon2id_MEMLIMIT_BYTES = 273741824;
         
         static SodiumLib()
         {
@@ -34,8 +34,8 @@ namespace VLO_BOARDS.Auth
                 Encoding.UTF8.GetBytes(password),
                 password.Length,
                 salt,
-                SodiumLib.crypto_pwhash_argon2id_OPSLIMIT_SENSITIVE,
-                SodiumLib.crypto_pwhash_argon2id_MEMLIMIT_SENSITIVE,
+                SodiumLib.crypto_pwhash_argon2id_OPSLIMIT,
+                SodiumLib.crypto_pwhash_argon2id_MEMLIMIT_BYTES,
                 SodiumLib.crypto_pwhash_argon2id_ALG_ARGON2ID13
             );
 
@@ -53,5 +53,8 @@ namespace VLO_BOARDS.Auth
 
         [DllImport(Name, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int crypto_pwhash(byte[] buffer, long bufferLen, byte[] password, long passwordLen, byte[] salt, long opsLimit, int memLimit, int alg);
+
+        [DllImport(Name, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int crypto_pwhash_str_verify(string str, byte[] passwd, int passwdlen);
     }
 }
