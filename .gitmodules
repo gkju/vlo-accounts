@@ -1,0 +1,3 @@
+﻿[submodule "vlo-accounts-frontend"]
+	path = vlo-accounts-frontend
+	url = https://github.com/gkju/vlo-accounts-frontend
