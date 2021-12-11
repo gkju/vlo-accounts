@@ -1,3 +1,4 @@
 [submodule "vlo-accounts-frontend"]
 	path = vlo-accounts-frontend
 	url = git@github.com:gkju/vlo-accounts-frontend
+	branch = master
