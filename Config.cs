@@ -32,51 +32,33 @@ namespace VLO_BOARDS
                 ApiSecrets = new List<Secret> {new Secret("SECRET1")}
             }
         };
-        public IEnumerable<ApiScope> ApiScopes => new List<ApiScope> { new ApiScope("VLO_BOARDS", "VLO Boards api scope") };
+        public IEnumerable<ApiScope> ApiScopes => new List<ApiScope>
+        {
+            new ApiScope("VLO_BOARDS", "VLO Boards api scope")
+        };
         
-        public IEnumerable<Client> Clients =>
-            new List<Client>
+        public IEnumerable<Client> Clients => new List<Client>
+        {
+            new Client
             {
-                new Client
-                {
-                    Enabled = _env.IsDevelopment(),
-                    ClientId = "VLO_BOARDS",
-                    ClientName = "VLO_BOARDS",
-                    AllowedGrantTypes = GrantTypes.Code,
-                    RedirectUris = { "https://localhost:5001/login-callback" },
-                    PostLogoutRedirectUris = { "https://localhost:5001/logout-callback" },
-                        AllowedScopes = new List<string>
-                        {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        "VLO_BOARDS"
-                    },
-                        RequirePkce = true,
-                        RequireClientSecret = false,
-                        ClientSecrets = new List<Secret> {},
-                    AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
-                    AllowedCorsOrigins = new List<string>() {"https://localhost:5001", "http://localhost:5001"}
-                },
-                new Client
-                {
-                    Enabled = _env.IsDevelopment(),
-                    ClientId = "VLO_BOARDS2",
-                    ClientName = "VLO_BOARDS2",
-                    AllowedGrantTypes = GrantTypes.Code,
-                    RedirectUris = { "https://localhost:3000/authentication/login-callback" },
-                    PostLogoutRedirectUris = { "https://localhost:3000/authentication/logout-callback" },
+                Enabled = _env.IsDevelopment(),
+                ClientId = "VLO_BOARDS",
+                ClientName = "VLO_BOARDS",
+                AllowedGrantTypes = GrantTypes.Code,
+                RedirectUris = { "http://localhost:3000/login-callback" },
+                PostLogoutRedirectUris = { "http://localhost:3000/logout-callback" },
                     AllowedScopes = new List<string>
                     {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        "VLO_BOARDS"
-                    },
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "VLO_BOARDS"
+                },
                     RequirePkce = true,
                     RequireClientSecret = false,
                     ClientSecrets = new List<Secret> {},
-                    AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
-                    AllowedCorsOrigins = new List<string>() {"https://localhost:3000", "http://localhost:3000"}
-                }
-            };
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
+                AllowedCorsOrigins = new List<string>() {"http://localhost:3000"}
+            }
+        };
     }
 }

@@ -93,7 +93,7 @@ namespace VLO_BOARDS.Areas.Auth
         }
 
         [HttpPost]
-        [Route("/ClearExternalCookies")]
+        [Route("ClearExternalCookies")]
         public async Task<IActionResult> ClearExternalCookies()
         {
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
