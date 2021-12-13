@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Reflection;
@@ -52,6 +53,7 @@ namespace VLO_BOARDS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // all configuration options except for baseorigin (config)
             string googleClientId = "";
             string googleSecret = "";
             string appDbContextNPGSQLConnection = "";
@@ -60,6 +62,7 @@ namespace VLO_BOARDS
             byte[] pemBytes = {};
             string captchaKey = "";
             string captchaPK = "";
+            List<string> corsorigins = new List<string>();
 
             if (env.IsDevelopment())
             {
@@ -73,6 +76,7 @@ namespace VLO_BOARDS
                 captchaKey = Configuration["CaptchaCredentials:PublicKey"];
                 services.AddDatabaseDeveloperPageExceptionFilter();
                 services.AddScoped<IEmailSender, DummySender>();
+                corsorigins = new List<string>() {"http://localhost:3000"};
             }
             
             services.AddHttpClient();
@@ -113,33 +117,7 @@ namespace VLO_BOARDS
             services.AddTransient<Features>(x => new Features
                 {SwaggerEnabled = Configuration.GetValue<bool>("Features:Swagger")});
 
-            services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddErrorDescriber<Internationalization.PolishIdentityErrorDescriber>()
-                .AddDefaultTokenProviders();
-            
-            services.Configure<IdentityOptions>(options =>
-            {
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequiredLength = 8;
-                options.Password.RequiredUniqueChars = 4;
-            });
-
-            services.Configure<IdentityOptions>(options =>
-            {
-                options.User.AllowedUserNameCharacters =
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+&*() ";
-                options.User.RequireUniqueEmail = true;
-            });
-
-            services.ConfigureApplicationCookie(options =>
-            {
-                options.LoginPath = "/Login";
-                options.LogoutPath = "/Logout";
-            });
+            services.AddAspNetIdentity();
 
             var is4Builder = services.AddIdentityServer(options =>
                 {
@@ -184,6 +162,17 @@ namespace VLO_BOARDS
                     options.SaveTokens = true;
                     options.AccessType = "offline";
                 });
+            
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "DefaultExternalOrigins",
+                    builder =>
+                    {
+                        builder.WithOrigins(corsorigins.ToArray())
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -204,7 +193,7 @@ namespace VLO_BOARDS
                 });
             }
             
-            InitializeDatabase(app, new Config(env));
+            IS4Utils.InitializeDatabase(app, new Config(env));
 
             if (env.IsDevelopment())
             {
@@ -244,60 +233,6 @@ namespace VLO_BOARDS
                     name: "default",
                     pattern: "/api/{controller}/{action=Index}/{id?}");
             });
-
-            if (env.IsDevelopment())
-            {
-                app.UseSpa(spa => spa.UseProxyToSpaDevelopmentServer("http://localhost:3000"));
-            }
         }
-
-        private void InitializeDatabase(IApplicationBuilder app, Config config)
-        {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>
-                ().CreateScope())
-            {
-                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().
-                    Database.Migrate();
-                var context = serviceScope.ServiceProvider.GetRequiredService
-                    <ConfigurationDbContext>();
-                context.Database.Migrate();
-                if (!context.Clients.Any())
-                {
-                    foreach (var client in config.Clients)
-                    {
-                        context.Clients.Add(client.ToEntity());
-                    }
-                    context.SaveChanges();
-                }
-
-                if (!context.ApiResources.Any())
-                {
-                    foreach (var resource in config.ApiResources)
-                    {
-                        context.ApiResources.Add(resource.ToEntity());
-                    }
-
-                    context.SaveChanges();
-                }
-                if (!context.IdentityResources.Any())
-                {
-                    foreach (var resource in config.IdentityResources)
-                    {
-                        context.IdentityResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
-                }
-                if (!context.ApiScopes.Any())
-                {
-                    foreach (var resource in config.ApiScopes)
-                    {
-                        context.ApiScopes.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
-                }
-            }
-        }
-
-
     }
 }
