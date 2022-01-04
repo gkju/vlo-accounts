@@ -19,16 +19,16 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("api/[area]/[controller]")]
-    public class LoginController : ControllerBase
+    public class Login : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<LoginController> _logger;
+        private readonly ILogger<Login> _logger;
         private readonly IEventService _events;
         private readonly IIdentityServerInteractionService _interaction;
         private readonly Captcha _captcha;
 
-        public LoginController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<LoginController> logger,
+        public Login(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<Login> logger,
             IIdentityServerInteractionService interaction,
             IEventService events,
             Captcha captcha)
@@ -49,9 +49,12 @@ namespace VLO_BOARDS.Areas.Auth
         /// <returns>Ok login result, unprocessable entity (2fa required), forbidden or bad request with model state</returns>
         [HttpPost]
         [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
-        public async Task<IActionResult> OnPostAsync(LoginInputModel loginInput, string returnUrl = null)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+        [ProducesResponseType(StatusCodes.Status423Locked)]
+        public async Task<ActionResult> OnPostAsync(LoginInputModel loginInput, string returnUrl = null)
         {
-            if (await _captcha.verifyCaptcha(loginInput.CaptchaResponse) < 0.5) 
+            if (await _captcha.VerifyCaptcha(loginInput.CaptchaResponse) < 0.7) 
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
@@ -94,7 +97,7 @@ namespace VLO_BOARDS.Areas.Auth
 
         [HttpPost]
         [Route("ClearExternalCookies")]
-        public async Task<IActionResult> ClearExternalCookies()
+        public async Task<ActionResult> ClearExternalCookies()
         {
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 

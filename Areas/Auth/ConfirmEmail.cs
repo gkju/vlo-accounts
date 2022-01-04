@@ -4,17 +4,18 @@ using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace VLO_BOARDS.Areas.Auth
 {
     [ApiController]
     [Area("Auth")]
     [Route("api/[area]/[controller]")]
-    public class ConfirmEmailController : ControllerBase
+    public class ConfirmEmail : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public ConfirmEmailController(UserManager<ApplicationUser> userManager)
+        public ConfirmEmail(UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
         }
@@ -23,15 +24,16 @@ namespace VLO_BOARDS.Areas.Auth
         /// Confirms email using provided userid and code
         /// </summary>
         /// <param name="confirmEmailInput"></param>
-        /// <returns>Either notfound, ok success or bad request with model state</returns>
+        /// <returns> Either notfound, ok success or bad request with model state </returns>
         [HttpPost]
-        public async Task<IActionResult> OnPostAsync(ConfirmEmailInputModel confirmEmailInput)
+        public async Task<ActionResult> OnPostAsync(ConfirmEmailInputModel confirmEmailInput)
         {
             var user = await _userManager.FindByIdAsync(confirmEmailInput.userId);
             
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{confirmEmailInput.userId}'.");
+                // do not reveal user doesn't exist
+                return Ok("Success");
             }
 
             confirmEmailInput.code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(confirmEmailInput.code));
@@ -43,7 +45,8 @@ namespace VLO_BOARDS.Areas.Auth
             }
             else
             {
-                return BadRequest("Error confirming email");
+                ModelState.AddModelError("code", "Niepoprawny kod");
+                return BadRequest(ModelState);
             }
         }
     }

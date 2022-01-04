@@ -15,13 +15,13 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("api/[area]/[controller]")]
-    public class ForgotPasswordController : ControllerBase
+    public class ForgotPassword : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly EmailTemplates _emailTemplates;
 
-        public ForgotPasswordController(UserManager<ApplicationUser> userManager, IEmailSender emailSender, EmailTemplates emailTemplates)
+        public ForgotPassword(UserManager<ApplicationUser> userManager, IEmailSender emailSender, EmailTemplates emailTemplates)
         {
             _userManager = userManager;
             _emailSender = emailSender;
@@ -32,9 +32,9 @@ namespace VLO_BOARDS.Areas.Auth
         /// Sends password reset email based on given email
         /// </summary>
         /// <param name="forgotPasswordInput"></param>
-        /// <returns>Ok success or bad request with model state</returns>
+        /// <returns> Ok success or bad request with model state </returns>
         [HttpPost]
-        public async Task<IActionResult> OnPostAsync(ForgotPasswordInputModel forgotPasswordInput)
+        public async Task<ActionResult> OnPostAsync(ForgotPasswordInputModel forgotPasswordInput)
         {
 
                 var user = await _userManager.FindByEmailAsync(forgotPasswordInput.Email);

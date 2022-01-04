@@ -5,7 +5,7 @@ using System.Text;
 namespace VLO_BOARDS.Auth
 {
     //libsodium implementation with the help of twelve21.io, currently there are no full lib sodium implementations in .net
-    public class SodiumLib
+    public static class SodiumLib
     {
         private const string Name = "libsodium";
         public const int crypto_pwhash_argon2id_ALG_ARGON2ID13 = 2;
@@ -17,18 +17,18 @@ namespace VLO_BOARDS.Auth
             sodium_init();
         }
         
-        public byte[] CreateSalt()
+        public static byte[] CreateSalt()
         {
             var buffer = new byte[32];
-            SodiumLib.randombytes_buf(buffer, buffer.Length);
+            randombytes_buf(buffer, buffer.Length);
             return buffer;
         }
         
-        public byte[] HashPassword(string password, byte[] salt)
+        public static byte[] HashPassword(string password, byte[] salt)
         {
             var hash = new byte[32];
 
-            var result = SodiumLib.crypto_pwhash(
+            var result = crypto_pwhash(
                 hash,
                 hash.Length,
                 Encoding.UTF8.GetBytes(password),

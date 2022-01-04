@@ -14,13 +14,13 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("api/[area]/[controller]")]
-    public class Login2FAController : ControllerBase
+    public class Login2FA : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ILogger<Login2FAController> _logger;
+        private readonly ILogger<Login2FA> _logger;
         private readonly IIdentityServerInteractionService _interaction;
 
-        public Login2FAController(SignInManager<ApplicationUser> signInManager, ILogger<Login2FAController> logger, IIdentityServerInteractionService interaction)
+        public Login2FA(SignInManager<ApplicationUser> signInManager, ILogger<Login2FA> logger, IIdentityServerInteractionService interaction)
         {
             _signInManager = signInManager;
             _logger = logger;
@@ -32,11 +32,13 @@ namespace VLO_BOARDS.Areas.Auth
         /// </summary>
         /// <param name="login2FaInput"></param>
         /// <param name="returnUrl"></param>
-        /// <returns>Either forbidden, bad request, ok login result or exception</returns>
+        /// <returns> Login result or exception </returns>
         /// <exception cref="InvalidOperationException"></exception>
         [HttpPost]
         [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
-        public async Task<IActionResult> OnPostAsync(Login2FAInputModel login2FaInput, string returnUrl = null)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status423Locked)]
+        public async Task<ActionResult> OnPostAsync(Login2FAInputModel login2FaInput, string returnUrl = null)
         {
             returnUrl = returnUrl ?? Url.Content("~/");
 
@@ -80,10 +82,8 @@ namespace VLO_BOARDS.Areas.Auth
         [Required]
         [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
         public string TwoFactorCode { get; set; }
-
-        [Display(Name = "Remember this machine")]
+        
         public bool RememberMachine { get; set; }
             
         public bool RememberMe { get; set; }

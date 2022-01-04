@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using IdentityServer4.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace VLO_BOARDS.Areas.Auth
     [ApiController]
     [Area("Auth")]
     [Route("api/[area]/[controller]")]
+    [Authorize]
     public class LogoutController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -34,15 +36,11 @@ namespace VLO_BOARDS.Areas.Auth
         /// <summary>
         /// Logs user out
         /// </summary>
-        /// <remarks>
-        /// Will sanitize returnurl
-        ///
-        /// </remarks>
-        /// <returns>Logout result</returns>
-        /// <response code="200">Logout result</response>
+        /// <returns> Logout result </returns>
+        /// <response code="200"> Logout result </response>
         [HttpPost]
-        [ProducesResponseType(typeof(LogoutResult), StatusCodes.Status200OK)]
-        public async Task<IActionResult> OnPost(string returnUrl = null)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> OnPost(string returnUrl = null)
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");

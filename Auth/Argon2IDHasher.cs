@@ -9,13 +9,6 @@ namespace VLO_BOARDS.Auth
 {
     public class Argon2IDHasher<TUser> : PasswordHasher<TUser> where TUser : class
     {
-        private SodiumLib _sodiumLib { get; }
-        
-        public Argon2IDHasher(IOptions<PasswordHasherOptions> optionsAccessor = null)
-        {
-            _sodiumLib = new SodiumLib();
-        }
-        
         public override PasswordVerificationResult VerifyHashedPassword(TUser user, string hashedPassword, string providedPassword)
         {
             if (hashedPassword == null)
@@ -72,9 +65,9 @@ namespace VLO_BOARDS.Auth
             }
 
             byte[] salt = new byte[saltSize];
-            salt = _sodiumLib.CreateSalt();
+            salt = SodiumLib.CreateSalt();
 
-            byte[] hashedPassword = _sodiumLib.HashPassword(password, salt);
+            byte[] hashedPassword = SodiumLib.HashPassword(password, salt);
 
             byte[] resultMarked = new byte[hashedPassword.Length + salt.Length+ 1];
             resultMarked[0] = 0xFF;
@@ -101,7 +94,7 @@ namespace VLO_BOARDS.Auth
                 byte[] expectedPassword = new byte[hashedPassword.Length - saltLength];
                 Buffer.BlockCopy(hashedPassword, salt.Length, expectedPassword, 0, hashedPassword.Length - saltLength);
 
-                byte[] resultPassword = _sodiumLib.HashPassword(password, salt);
+                byte[] resultPassword = SodiumLib.HashPassword(password, salt);
 
                 return CryptographicOperations.FixedTimeEquals(expectedPassword, resultPassword);
             }

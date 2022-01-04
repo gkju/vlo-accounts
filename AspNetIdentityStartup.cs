@@ -7,6 +7,8 @@ namespace VLO_BOARDS;
 
 public static class AspNetIdentityStartup
 {
+    public static string AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+&*()";
+
     public static IServiceCollection AddAspNetIdentity(this IServiceCollection services)
     {
         services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
@@ -26,8 +28,7 @@ public static class AspNetIdentityStartup
 
         services.Configure<IdentityOptions>(options =>
         {
-            options.User.AllowedUserNameCharacters =
-                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._+&*() ";
+            options.User.AllowedUserNameCharacters = AllowedUserNameCharacters;
             options.User.RequireUniqueEmail = true;
         });
 

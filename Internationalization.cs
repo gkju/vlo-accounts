@@ -59,7 +59,7 @@ namespace VLO_BOARDS
             {
                 return new IdentityError
                 {
-                    Code = nameof(DuplicateUserName), Description = $"Nazwa użytkownika '{userName}' już jest zabrana"
+                    Code = nameof(DuplicateUserName), Description = $"Nazwa użytkownika '{userName}' już jest w użyciu"
                 };
             }
 

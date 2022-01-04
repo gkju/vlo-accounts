@@ -29,10 +29,12 @@ namespace VLO_BOARDS.Areas.Auth
         /// Changes the password to a new one based on input
         /// </summary>
         /// <param name="resetPasswordInput"></param>
-        /// <returns>Either ok success or bad request with modelstate</returns>
+        /// <returns> Either ok success or bad request with modelstate </returns>
         [HttpPost]
-        public async Task<ActionResult<string>> OnPostAsync(ResetPasswordInputModel resetPasswordInput) {
-            if (await _captcha.verifyCaptcha(resetPasswordInput.CaptchaResponse) < 0.3)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> OnPostAsync(ResetPasswordInputModel resetPasswordInput) {
+            if (await _captcha.VerifyCaptcha(resetPasswordInput.CaptchaResponse) < 0.7)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);

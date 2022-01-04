@@ -7,6 +7,7 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using Fluid;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -34,19 +35,20 @@ namespace VLO_BOARDS.Areas.Auth
         /// <summary>
         /// Resends email confirmation
         /// </summary>
-        /// <response code="200">Success</response>
+        /// <response code="200"> Success </response>
         [HttpPost]
-        public async Task<IActionResult> OnPostAsync(ResendEmailConfirmationInputModel resendEmailConfirmationInput)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> OnPostAsync(ResendEmailConfirmationInputModel resendEmailConfirmationInput)
         {
             
             var user = await _userManager.FindByEmailAsync(resendEmailConfirmationInput.Email);
-            if (user == null)
+            if (user == null || user.EmailConfirmed)
             {
-                //Do not reveal user doesn't exist
+                //Do not reveal user doesn't exist/exists
                 return Ok("Success");
             }
-
-            var userId = await _userManager.GetUserIdAsync(user);
+            
+            var userId = user.Id;
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             

@@ -39,18 +39,15 @@ namespace VLO_BOARDS.Areas.Auth
         /// <summary>
         /// Logins user using 2fa recovery code
         /// </summary>
-        /// <remarks>
-        /// Also sanitizes returnurl. Who could've thought
-        ///
-        /// </remarks>
-        /// <returns>Login with recovery code result</returns>
-        /// <response code="200">Returns LoginWithRecoveryCodeResult</response>
-        /// <response code="400">Default invalid model response</response>
-        /// <response code="423">User is locked out of his account</response> 
+        /// <returns> Login with recovery code result </returns>
+        /// <response code="200"> Returns LoginWithRecoveryCodeResult </response>
+        /// <response code="400"> Default invalid model response </response>
+        /// <response code="423"> User is locked out of his account </response> 
         [HttpPost]
-        [ProducesResponseType(typeof(LoginWithRecoveryCodeResult), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(LoginWithRecoveryCodeResult), StatusCodes.Status423Locked)]
-        public async Task<IActionResult> OnPostAsync(LoginWithRecoveryCodeInputModel loginWithRecoveryCodeInput, string returnUrl = null)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status423Locked)]
+        public async Task<ActionResult> OnPostAsync(LoginWithRecoveryCodeInputModel loginWithRecoveryCodeInput, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             
@@ -73,7 +70,7 @@ namespace VLO_BOARDS.Areas.Auth
             if (result.Succeeded)
             {
                 _logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
-                return Ok(new LoginWithRecoveryCodeResult("Redirect", true, returnUrl ?? Url.Content("~/")));
+                return Ok(new LoginWithRecoveryCodeResult("Redirect", true, returnUrl));
             }
 
             if (result.IsLockedOut)

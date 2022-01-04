@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using VLO_BOARDS.Data;
 
 [assembly: HostingStartup(typeof(VLO_BOARDS.Areas.Identity.IdentityHostingStartup))]
 namespace VLO_BOARDS.Areas.Identity

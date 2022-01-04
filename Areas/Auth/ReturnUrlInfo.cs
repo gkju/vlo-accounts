@@ -18,11 +18,11 @@ namespace VLO_BOARDS.Areas.Auth
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILogger<LoginController> _logger;
+        private readonly ILogger<Login> _logger;
         private readonly IEventService _events;
         private readonly IIdentityServerInteractionService _interaction;
 
-        public ReturnUrlInfoController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<LoginController> logger,
+        public ReturnUrlInfoController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<Login> logger,
             IIdentityServerInteractionService interaction,
             IEventService events)
         {
@@ -32,29 +32,26 @@ namespace VLO_BOARDS.Areas.Auth
             _events = events;
             _interaction = interaction;
         }
-
-        // R.I.P rest, I want it in the body!
+        
         /// <summary>
         /// Returns information about client associated with returnurl
         /// </summary>
         /// <remarks>
         /// Use every time you need to check whether to redirect to returnurl
-        ///
         /// </remarks>
-        /// <returns>Info on returnurl</returns>
-        /// <response code="200">Returns info on returnurl</response>
-        /// <response code="400">Default invalid model response</response>     
+        /// <returns> Info on returnurl </returns>
+        /// <response code="200"> Returns info on returnurl </response>
+        /// <response code="400"> Default invalid model response </response>     
         [HttpPost]
-        [ProducesResponseType(typeof(ReturnUrlInfo), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> OnPost(ReturnUrlInfoInputModel returnUrlInfoInput)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<ReturnUrlInfo>> OnPost(ReturnUrlInputModel returnUrlInput)
         {
             
             var returnUrlInfo = new ReturnUrlInfo();
 
-            if (_interaction.IsValidReturnUrl(returnUrlInfoInput.returnUrl))
+            if (_interaction.IsValidReturnUrl(returnUrlInput.returnUrl))
             {
-                var context = await _interaction.GetAuthorizationContextAsync(returnUrlInfoInput.returnUrl);
+                var context = await _interaction.GetAuthorizationContextAsync(returnUrlInput.returnUrl);
                 returnUrlInfo.clientInfo = true;
                 returnUrlInfo.clientName = context.Client?.ClientName;
                 returnUrlInfo.clientUri = context.Client?.ClientUri;
@@ -63,17 +60,17 @@ namespace VLO_BOARDS.Areas.Auth
             }
             else
             {
-                returnUrlInfoInput.returnUrl = Url.Content("~/");
-                returnUrlInfo.safeReturnUrl = returnUrlInfoInput.returnUrl;
-                returnUrlInfo.validReturnUrl = false;
                 returnUrlInfo.clientInfo = false;
+                returnUrlInput.returnUrl = Url.Content("~/");
+                returnUrlInfo.safeReturnUrl = returnUrlInput.returnUrl;
+                returnUrlInfo.validReturnUrl = false;
             }
             
-            return Ok(returnUrlInfo);
+            return returnUrlInfo;
         }
     }
     
-    public class ReturnUrlInfoInputModel
+    public class ReturnUrlInputModel
     {
         [Required]
         [DataType(DataType.Url)]

@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace VLO_BOARDS
@@ -12,15 +13,26 @@ namespace VLO_BOARDS
         
         private readonly IHttpClientFactory _clientFactory;
         private readonly CaptchaCredentials _credentials;
+        private static readonly Regex ANRegex = new Regex("^[a-zA-Z0-9]+$");
         
         public Captcha(IHttpClientFactory clientFactory, CaptchaCredentials credentials)
         {
             _clientFactory = clientFactory;
             _credentials = credentials;
         }
-
-        public async Task<float> verifyCaptcha(string response)
+        /// <summary>
+        /// Verifies google recaptcha v3 response
+        /// </summary>
+        /// <param name="response"> Recaptcha response </param>
+        /// <returns> User score </returns>
+        /// <exception cref="ArgumentException"></exception>
+        public async Task<float> VerifyCaptcha(string response)
         {
+            if (!ANRegex.IsMatch(response))
+            {
+                throw new ArgumentException("Invalid response str");
+            }
+            
             var client = _clientFactory.CreateClient();
 
             string url =

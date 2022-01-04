@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net.Mail;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using CanonicalEmails;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -51,31 +53,24 @@ namespace VLO_BOARDS.Areas.Auth
         }
 
         /// <summary>
-        /// 
+        /// Registers user based on the provided input
         /// </summary>
         /// <param name="registerInput"></param>
-        /// <param name="returnUrl"></param>
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(typeof(RegistrationResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> OnPostAsync(RegisterInputModel registerInput, string returnUrl = null)
+        public async Task<ActionResult> OnPostAsync(RegisterInputModel registerInput)
         {
-            if (await _captcha.verifyCaptcha(registerInput.CaptchaResponse) < 0.3)
+            if (await _captcha.VerifyCaptcha(registerInput.CaptchaResponse) < 0.7)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
                 return BadRequest(ModelState);
             }
+
+            registerInput.Email = Normalizer.Normalize(new MailAddress(registerInput.Email)).ToString();
             
-            returnUrl ??= Url.Content("~/");
-
-            //!= true for semantic reasons
-            if ((_interaction.IsValidReturnUrl(returnUrl)) != true)
-            {
-                returnUrl = Url.Content("~/");
-            }
-
-            var ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            var externalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             var user = new ApplicationUser { UserName = registerInput.Username, Email = registerInput.Email };
             
             var result = await _userManager.CreateAsync(user, registerInput.Password);
@@ -97,7 +92,7 @@ namespace VLO_BOARDS.Areas.Auth
                 
                 return Ok(new RegistrationResult("ConfirmRegistration"));
                 
-                //Configuration will be ignored as unconfirmed email accounts are unsafe, legacy code below
+                // Configuration will be ignored as unconfirmed email accounts are unsafe, legacy code below
                 /*
                 if (_userManager.Options.SignIn.RequireConfirmedAccount)
                 {

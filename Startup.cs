@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using IdentityServer4;
 using IdentityServer4.EntityFramework.DbContexts;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,19 +14,18 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using VLO_BOARDS.Auth;
-using System.Linq;
 using System.Threading.Tasks;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
+using CanonicalEmails;
 using IdentityServer4.Configuration;
-using IdentityServer4.EntityFramework.Mappers;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
 
 namespace VLO_BOARDS
 {
-    public class Startup
+    public partial class Startup
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
@@ -40,59 +37,56 @@ namespace VLO_BOARDS
         public IConfiguration Configuration { get; }
         public IWebHostEnvironment env { get; }
 
-        public class DummySender : IEmailSender
-        {
-            public Task SendEmailAsync(string email, string subject, string htmlMessage)
-            {
-                Console.WriteLine(email + subject + htmlMessage);
-
-                return Task.CompletedTask;
-            }
-        }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
+        /// This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             // all configuration options except for baseorigin (config)
-            string googleClientId = "";
-            string googleSecret = "";
-            string appDbContextNPGSQLConnection = "";
-            string is4DbContextNPGSQLConnection = "";
-            string migrationsAssembly = "";
-            byte[] pemBytes = {};
-            string captchaKey = "";
-            string captchaPK = "";
+            string 
+                googleClientId = "", 
+                googleSecret = "",
+                appDbContextNpgsqlConnection = "",
+                is4DbContextNpgsqlConnection = "",
+                migrationsAssembly = "",
+                captchaKey = "",
+                captchaPk = "",
+                MailKey = "",
+                MailUrl = "",
+                MailDoname = "";
             List<string> corsorigins = new List<string>();
+            byte[] pemBytes = {};
 
             if (env.IsDevelopment())
             {
                 googleClientId = Configuration["GoogleAuth:ClientId"];
                 googleSecret = Configuration["GoogleAuth:SecretKey"];
-                appDbContextNPGSQLConnection = Configuration.GetConnectionString("NPGSQL");
-                is4DbContextNPGSQLConnection = Configuration.GetConnectionString("IDENTITYDB");
+                appDbContextNpgsqlConnection = Configuration.GetConnectionString("NPGSQL");
+                is4DbContextNpgsqlConnection = Configuration.GetConnectionString("IDENTITYDB");
                 migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
                 pemBytes = Convert.FromBase64String(@Configuration.GetSection("ISKeys:ECDSAPEM").Get<string>());
-                captchaPK = Configuration["CaptchaCredentials:PrivateKey"];
+                captchaPk = Configuration["CaptchaCredentials:PrivateKey"];
                 captchaKey = Configuration["CaptchaCredentials:PublicKey"];
                 services.AddDatabaseDeveloperPageExceptionFilter();
-                services.AddScoped<IEmailSender, DummySender>();
                 corsorigins = new List<string>() {"http://localhost:3000"};
+                // TODO: remove temporary credentials from mailgun before publishing source code
+                MailKey = Configuration["Mailgun:ApiKey"];
+                MailDoname = Configuration["Mailgun:MailDoname"];
             }
-            
+
+            services.AddScoped(x => new MailgunConfig {ApiKey = MailKey, DomainName = MailDoname});
+            services.AddScoped<IEmailSender, EmailSender>();
             services.AddHttpClient();
             services.AddScoped<EmailTemplates>();
             
-            services.AddTransient<CaptchaCredentials>(x => new CaptchaCredentials(captchaPK, captchaKey));
+            services.AddTransient(x => new CaptchaCredentials(captchaPk, captchaKey));
             services.AddTransient<Captcha>();
-
-
+            
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(appDbContextNPGSQLConnection, sql => sql.MigrationsAssembly(migrationsAssembly)));
+                options.UseNpgsql(appDbContextNpgsqlConnection, sql => sql.MigrationsAssembly(migrationsAssembly)));
             services.AddDbContext<ConfigurationDbContext>(options =>
-                options.UseNpgsql(is4DbContextNPGSQLConnection,
+                options.UseNpgsql(is4DbContextNpgsqlConnection,
                     sql => sql.MigrationsAssembly(migrationsAssembly)));
             services.AddDbContext<PersistedGrantDbContext>(options =>
-                options.UseNpgsql(is4DbContextNPGSQLConnection,
+                options.UseNpgsql(is4DbContextNpgsqlConnection,
                     sql => sql.MigrationsAssembly(migrationsAssembly)));
             
             services.AddScoped<IPasswordHasher<ApplicationUser>, Argon2IDHasher<ApplicationUser>>();
@@ -139,10 +133,10 @@ namespace VLO_BOARDS
                     
                 })
                 .AddConfigurationStore(options => options.ConfigureDbContext = b =>
-                    b.UseNpgsql(is4DbContextNPGSQLConnection,
+                    b.UseNpgsql(is4DbContextNpgsqlConnection,
                         sql => sql.MigrationsAssembly(migrationsAssembly)))
                 .AddOperationalStore(options => options.ConfigureDbContext = b =>
-                    b.UseNpgsql(is4DbContextNPGSQLConnection,
+                    b.UseNpgsql(is4DbContextNpgsqlConnection,
                         sql => sql.MigrationsAssembly(migrationsAssembly)))
                 .AddAspNetIdentity<ApplicationUser>();
             
@@ -172,66 +166,6 @@ namespace VLO_BOARDS
                             .AllowAnyHeader()
                             .AllowAnyMethod();
                     });
-            });
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public async void Configure(IApplicationBuilder app, IWebHostEnvironment env, Features features)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseCookiePolicy(new CookiePolicyOptions
-                {
-                    MinimumSameSitePolicy = SameSiteMode.None
-                });
-            }
-            else
-            {
-                app.UseCookiePolicy(new CookiePolicyOptions
-                {
-                    MinimumSameSitePolicy = SameSiteMode.Strict
-                });
-            }
-            
-            IS4Utils.InitializeDatabase(app, new Config(env));
-
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-                app.UseMigrationsEndPoint();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
-            
-            if (features.SwaggerEnabled)
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("v1/swagger.json", "VLO Boards API v1");
-                });
-                app.UseReDoc(c =>
-                {
-                    c.DocumentTitle = "Dokumentacja API Vlo Boards, dostępna również pod /swagger/";
-                });
-            }
-
-            app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseIdentityServer();
-            app.UseAuthorization();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "areas",
-                    pattern: "/api/{area:exists}/{controller}/");
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "/api/{controller}/{action=Index}/{id?}");
             });
         }
     }
