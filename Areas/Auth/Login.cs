@@ -1,11 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Net.Mail;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security.Policy;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using CanonicalEmails;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -54,10 +57,10 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status423Locked)]
         public async Task<ActionResult> OnPostAsync(LoginInputModel loginInput, string returnUrl = null)
         {
-            if (await _captcha.VerifyCaptcha(loginInput.CaptchaResponse) < 0.7) 
+            if (await _captcha.VerifyCaptcha(loginInput.CaptchaResponse) < Captcha.Threshold) 
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
-                return BadRequest(ModelState);
+                return this.GenBadRequestProblem();
             }
             
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
@@ -65,14 +68,27 @@ namespace VLO_BOARDS.Areas.Auth
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
             
             returnUrl ??= Url.Content("~/");
-
-            //!= true for semantic reasons
-            if (_interaction.IsValidReturnUrl(returnUrl) != true)
+            
+            if (!_interaction.IsValidReturnUrl(returnUrl))
             {
                 returnUrl = Url.Content("~/");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(loginInput.Username, loginInput.Password, loginInput.RememberMe, lockoutOnFailure: true);
+            if (new EmailAddressAttribute().IsValid(loginInput.UsernameOrEmail))
+            {
+                var email = new MailAddress(loginInput.UsernameOrEmail);
+                email = Normalizer.Normalize(email);
+                var user = await _userManager.FindByEmailAsync(email.ToString());
+                if (user == null)
+                {
+                    ModelState.AddModelError(Constants.UsernameOrPasswordError, Constants.InvalidUsernameOrPasswordStatus);
+                    return this.GenBadRequestProblem();
+                }
+
+                loginInput.UsernameOrEmail = user.UserName;
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(loginInput.UsernameOrEmail, loginInput.Password, loginInput.RememberMe, lockoutOnFailure: true);
             
             if (result.Succeeded)
             {
@@ -81,18 +97,19 @@ namespace VLO_BOARDS.Areas.Auth
             }
             if (result.RequiresTwoFactor)
             {
-                return UnprocessableEntity("2FA Required");
+                ModelState.AddModelError(Constants.TwoFaError, Constants.TwoFaRequiredStatus);
+                return this.GenUnprocessableProblem();
             }
             if (result.IsLockedOut)
             {
-                return StatusCode((int) HttpStatusCode.Locked, "Locked Out");
+                ModelState.AddModelError(Constants.AccountError, Constants.LockedOutStatus);
+                return this.GenLockedProblem();
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "Niepoprawny login lub hasło");
-                return BadRequest(ModelState);
+                ModelState.AddModelError(Constants.UsernameOrPasswordError, Constants.InvalidUsernameOrPasswordStatus);
+                return this.GenBadRequestProblem();
             }
-            
         }
 
         [HttpPost]
@@ -101,7 +118,7 @@ namespace VLO_BOARDS.Areas.Auth
         {
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            return Ok();
+            return Ok("Success");
         }
     }
     
@@ -109,7 +126,7 @@ namespace VLO_BOARDS.Areas.Auth
     {
         [Required]
         [DataType(DataType.Text)]
-        public string Username { get; set; }
+        public string UsernameOrEmail { get; set; }
 
         [Required] 
         [DataType(DataType.Password)]

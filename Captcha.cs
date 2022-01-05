@@ -10,10 +10,11 @@ namespace VLO_BOARDS
     public class Captcha
     {
         public static string ErrorName = "CaptchaError";
+        public static readonly float Threshold = 0.7f;
         
         private readonly IHttpClientFactory _clientFactory;
         private readonly CaptchaCredentials _credentials;
-        private static readonly Regex ANRegex = new Regex("^[a-zA-Z0-9]+$");
+        private static readonly Regex AnRegex = new ("^[0-9a-zA-Z_-]*$");
         
         public Captcha(IHttpClientFactory clientFactory, CaptchaCredentials credentials)
         {
@@ -28,7 +29,7 @@ namespace VLO_BOARDS
         /// <exception cref="ArgumentException"></exception>
         public async Task<float> VerifyCaptcha(string response)
         {
-            if (!ANRegex.IsMatch(response))
+            if (!AnRegex.IsMatch(response))
             {
                 throw new ArgumentException("Invalid response str");
             }

@@ -6,8 +6,7 @@ using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Swashbuckle.AspNetCore.Annotations;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -34,10 +33,10 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> OnPostAsync(ResetPasswordInputModel resetPasswordInput) {
-            if (await _captcha.VerifyCaptcha(resetPasswordInput.CaptchaResponse) < 0.7)
+            if (await _captcha.VerifyCaptcha(resetPasswordInput.CaptchaResponse) < Captcha.Threshold)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
-                return BadRequest(ModelState);
+                return this.GenBadRequestProblem();
             }
             
             
@@ -56,10 +55,10 @@ namespace VLO_BOARDS.Areas.Auth
             
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(error.Code, error.Description);
             }
             
-            return BadRequest(ModelState);
+            return this.GenBadRequestProblem();
         }
     }
     

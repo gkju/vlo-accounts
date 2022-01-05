@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VLO_BOARDS.Auth;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth.Manage;
 
@@ -42,18 +43,18 @@ public class RequestEmailChange : ControllerBase
     [HttpPost]
     public async Task<ActionResult> OnPostAsync(RequestEmailChangeInput emailInput)
     {
-        /*
-        if (await _captcha.VerifyCaptcha(emailInput.CaptchaResponse) < 0.7)
+        if (await _captcha.VerifyCaptcha(emailInput.CaptchaResponse) < Captcha.Threshold)
         {
             ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
-            return BadRequest(ModelState);
-        }*/
+            return this.GenBadRequestProblem();
+        }
 
         var user = await _userManager.GetUserAsync(User);
         emailInput.Email = new MailAddress(emailInput.Email).Normalize().ToString();
         if (user.Email == emailInput.Email)
         {
-            return UnprocessableEntity("Nie można zmienić maila na ten sam adres mail");
+            ModelState.AddModelError(Constants.AccountError, "Nie można zmienić maila na ten sam adres mail");
+            return this.GenUnprocessableProblem();
         }
 
         var bytes = new byte[8];
@@ -85,11 +86,11 @@ public class RequestEmailChange : ControllerBase
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult> OnPutAsync(ConfirmEmailChangeInput emailChangeInput)
     {
-        /*if (await _captcha.VerifyCaptcha(emailChangeInput.CaptchaResponse) < 0.7)
+        if (await _captcha.VerifyCaptcha(emailChangeInput.CaptchaResponse) < Captcha.Threshold)
         {
             ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
-            return BadRequest(ModelState);
-        }*/
+            return this.GenBadRequestProblem();
+        }
 
         var user = await _userManager.GetUserAsync(User);
         
@@ -97,7 +98,8 @@ public class RequestEmailChange : ControllerBase
         requests = requests.Where(req => req.Date.AddMinutes(30) > DateTime.Now.ToUniversalTime()).ToArray();
         if (!(requests.Length > 0))
         {
-            return UnprocessableEntity("Nie masz aktualnych zapytań o zmianę adresu email");
+            ModelState.AddModelError(Constants.AccountError, "Nie masz aktualnych zapytań o zmianę adresu email");
+            return this.GenUnprocessableProblem();
         }
 
         var hash = Encoding.UTF8.GetString(SodiumLib.HashPassword(emailChangeInput.Code, _dummySalt));
@@ -112,8 +114,8 @@ public class RequestEmailChange : ControllerBase
             return Ok("Success");
         }
 
-        ModelState.AddModelError("Invalid code", "Invalid code");
-        return UnprocessableEntity("Invalid code");
+        ModelState.AddModelError(Constants.InvalidCodeError, Constants.InvalidCodeStatus);
+        return this.GenUnprocessableProblem();
     }
 }
 

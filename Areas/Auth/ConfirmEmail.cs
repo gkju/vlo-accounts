@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -45,8 +46,8 @@ namespace VLO_BOARDS.Areas.Auth
             }
             else
             {
-                ModelState.AddModelError("code", "Niepoprawny kod");
-                return BadRequest(ModelState);
+                ModelState.AddModelError(Constants.InvalidCodeError, Constants.InvalidCodeStatus);
+                return this.GenBadRequestProblem();
             }
         }
     }

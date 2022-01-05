@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -62,10 +63,10 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> OnPostAsync(RegisterInputModel registerInput)
         {
-            if (await _captcha.VerifyCaptcha(registerInput.CaptchaResponse) < 0.7)
+            if (await _captcha.VerifyCaptcha(registerInput.CaptchaResponse) < Captcha.Threshold)
             {
                 ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
-                return BadRequest(ModelState);
+                return this.GenBadRequestProblem();
             }
 
             registerInput.Email = Normalizer.Normalize(new MailAddress(registerInput.Email)).ToString();
@@ -106,10 +107,10 @@ namespace VLO_BOARDS.Areas.Auth
             }
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(error.Code, error.Description);
             }
 
-            return BadRequest(ModelState);
+            return this.GenBadRequestProblem();
         }
 
     }
@@ -118,7 +119,6 @@ namespace VLO_BOARDS.Areas.Auth
     {
         [Required]
         [EmailAddress]
-        [Display(Name = "Email")]
         public string Email { get; set; }
 
         [Required]
@@ -138,10 +138,11 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class RegistrationResult
     {
+        public string Message { get; set; }
+        
         public RegistrationResult(string message)
         {
-            this.message = message;
+            Message = message;
         }
-        public string message { get; set; }
     }
 }

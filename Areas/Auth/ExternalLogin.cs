@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
+using CanonicalEmails;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -16,6 +18,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -115,7 +118,7 @@ namespace VLO_BOARDS.Areas.Auth
 
             if (result.IsNotAllowed)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Niepotwierdzone lub usunięte konto"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", Constants.UnconfirmedOrNonexistentStatus}}).ToString();
                 return Redirect(redirectUrl);
             }
 
@@ -126,7 +129,7 @@ namespace VLO_BOARDS.Areas.Auth
             }
             if (result.IsLockedOut)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", $"Zablokowane konto"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", Constants.LockedOutStatus}}).ToString();
                 return Redirect(redirectUrl);
             }
             else
@@ -138,6 +141,7 @@ namespace VLO_BOARDS.Areas.Auth
                 if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
                 {
                     email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                    email = Normalizer.Normalize(new MailAddress(email)).ToString();
                 }
 
                 if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Name))
@@ -166,9 +170,12 @@ namespace VLO_BOARDS.Areas.Auth
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                ModelState.AddModelError(string.Empty, "Błąd zewnętrzny");
-                return BadRequest(ModelState);
+                ModelState.AddModelError(Constants.ExternalError, Constants.ExternalErrorStatus);
+                return this.GenBadRequestProblem();
             }
+
+            externalLoginRegisterInput.Email =
+                Normalizer.Normalize(new MailAddress(externalLoginRegisterInput.Email)).ToString();
             
             var user = new ApplicationUser { UserName = externalLoginRegisterInput.Username, Email = externalLoginRegisterInput.Email };
 
@@ -200,10 +207,10 @@ namespace VLO_BOARDS.Areas.Auth
             
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(error.Code, error.Description);
             }
 
-            return BadRequest(ModelState);
+            return this.GenBadRequestProblem();
         }
     }
     

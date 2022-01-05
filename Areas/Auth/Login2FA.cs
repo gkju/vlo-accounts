@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -66,13 +67,14 @@ namespace VLO_BOARDS.Areas.Auth
             else if (result.IsLockedOut)
             {
                 _logger.LogWarning("User with ID '{UserId}' account locked out.", user.Id);
-                return StatusCode((int) HttpStatusCode.Locked, "Locked Out");
+                ModelState.AddModelError(Constants.AccountError, Constants.LockedOutStatus);
+                return this.GenLockedProblem();
             }
             else
             {
                 _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", user.Id);
-                ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
-                return BadRequest(ModelState);
+                ModelState.AddModelError(Constants.TwoFaError, Constants.InvalidAuthenticatorCodeStatus);
+                return this.GenBadRequestProblem();
             }
         }
     }
