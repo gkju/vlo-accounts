@@ -216,12 +216,10 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class ExternalLoginRegisterInputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required] [EmailAddress]
         public string Email { get; set; }
             
-        [Required]
-        [DataType(DataType.Text)]
+        [Required] [DataType(DataType.Text)]
         public string Username { get; set; }
     }
 }

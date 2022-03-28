@@ -20,12 +20,14 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<Login2FA> _logger;
         private readonly IIdentityServerInteractionService _interaction;
+        private readonly Captcha _captcha;
 
-        public Login2FA(SignInManager<ApplicationUser> signInManager, ILogger<Login2FA> logger, IIdentityServerInteractionService interaction)
+        public Login2FA(SignInManager<ApplicationUser> signInManager, ILogger<Login2FA> logger, IIdentityServerInteractionService interaction, Captcha captcha)
         {
             _signInManager = signInManager;
             _logger = logger;
             _interaction = interaction;
+            _captcha = captcha;
         }
 
         /// <summary>
@@ -41,6 +43,12 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status423Locked)]
         public async Task<ActionResult> OnPostAsync(Login2FAInputModel login2FaInput, string returnUrl = null)
         {
+            if (await _captcha.VerifyCaptcha(login2FaInput.CaptchaResponse) < Captcha.Threshold)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
+                return this.GenBadRequestProblem();
+            }
+            
             returnUrl = returnUrl ?? Url.Content("~/");
 
             //!= true for semantic reasons
@@ -89,5 +97,8 @@ namespace VLO_BOARDS.Areas.Auth
         public bool RememberMachine { get; set; }
             
         public bool RememberMe { get; set; }
+        
+        [Required]
+        public string CaptchaResponse { get; set; }
     }
 }

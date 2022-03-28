@@ -23,17 +23,20 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly ILogger<LoginWithRecoveryCodeController> _logger;
         private readonly IEventService _events;
         private readonly IIdentityServerInteractionService _interaction;
+        private readonly Captcha _captcha;
 
         public LoginWithRecoveryCodeController(
             SignInManager<ApplicationUser> signInManager, 
             ILogger<LoginWithRecoveryCodeController> logger,
             IIdentityServerInteractionService interaction,
-            IEventService events)
+            IEventService events,
+            Captcha captcha)
         {
             _signInManager = signInManager;
             _logger = logger;
             _events = events;
             _interaction = interaction;
+            _captcha = captcha;
         }
 
 
@@ -50,6 +53,12 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status423Locked)]
         public async Task<ActionResult> OnPostAsync(LoginWithRecoveryCodeInputModel loginWithRecoveryCodeInput, string returnUrl = null)
         {
+            if (await _captcha.VerifyCaptcha(loginWithRecoveryCodeInput.CaptchaResponse) < Captcha.Threshold)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
+                return this.GenBadRequestProblem();
+            }
+            
             returnUrl ??= Url.Content("~/");
             
             if (!_interaction.IsValidReturnUrl(returnUrl))
@@ -94,19 +103,21 @@ namespace VLO_BOARDS.Areas.Auth
         [DataType(DataType.Text)]
         [Display(Name = "Recovery Code")]
         public string RecoveryCode { get; set; }
+        [Required]
+        public string CaptchaResponse { get; set; }
     }
 
     public class LoginWithRecoveryCodeResult
     {
-        public string message { get; set; }
-        public bool redirect { get; set; }
-        public string returnUrl { get; set; }
+        public string Message { get; set; }
+        public bool Redirect { get; set; }
+        public string ReturnUrl { get; set; }
 
         public LoginWithRecoveryCodeResult(string message, bool redirect = false, string returnUrl = "")
         {
-            this.message = message;
-            this.redirect = redirect;
-            this.returnUrl = returnUrl;
+            this.Message = message;
+            this.Redirect = redirect;
+            this.ReturnUrl = returnUrl;
         }
     }
 }

@@ -65,7 +65,7 @@ namespace VLO_BOARDS.Areas.Auth
         {
             if (await _captcha.VerifyCaptcha(registerInput.CaptchaResponse) < Captcha.Threshold)
             {
-                ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
                 return this.GenBadRequestProblem();
             }
 
@@ -117,8 +117,7 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class RegisterInputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required] [EmailAddress]
         public string Email { get; set; }
 
         [Required]

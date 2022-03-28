@@ -10,6 +10,7 @@ namespace VLO_BOARDS
     public class Captcha
     {
         public static string ErrorName = "CaptchaError";
+        public static string ErrorStatus = "Bad captcha";
         public static readonly float Threshold = 0.7f;
         
         private readonly IHttpClientFactory _clientFactory;

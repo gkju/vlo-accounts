@@ -17,7 +17,7 @@ namespace VLO_BOARDS.Data
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "6.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -142,6 +142,9 @@ namespace VLO_BOARDS.Data
                     b.Property<string>("ObjectId")
                         .HasColumnType("text");
 
+                    b.Property<bool>("BackedInMinio")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Bucket")
                         .HasColumnType("text");
 
@@ -154,6 +157,9 @@ namespace VLO_BOARDS.Data
                     b.Property<string>("FileName")
                         .HasColumnType("text");
 
+                    b.Property<string>("MasterFileId")
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
@@ -163,7 +169,12 @@ namespace VLO_BOARDS.Data
                     b.Property<bool>("Public")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("UserManageable")
+                        .HasColumnType("boolean");
+
                     b.HasKey("ObjectId");
+
+                    b.HasIndex("MasterFileId");
 
                     b.HasIndex("OwnerId");
 
@@ -360,6 +371,10 @@ namespace VLO_BOARDS.Data
 
             modelBuilder.Entity("AccountsData.Models.DataModels.File", b =>
                 {
+                    b.HasOne("AccountsData.Models.DataModels.File", "MasterFile")
+                        .WithMany()
+                        .HasForeignKey("MasterFileId");
+
                     b.HasOne("AccountsData.Models.DataModels.ApplicationUser", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId");
@@ -367,6 +382,8 @@ namespace VLO_BOARDS.Data
                     b.HasOne("AccountsData.Models.DataModels.Folder", "Parent")
                         .WithMany()
                         .HasForeignKey("ParentId");
+
+                    b.Navigation("MasterFile");
 
                     b.Navigation("Owner");
 

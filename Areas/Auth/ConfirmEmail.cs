@@ -15,10 +15,12 @@ namespace VLO_BOARDS.Areas.Auth
     public class ConfirmEmail : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly Captcha _captcha;
 
-        public ConfirmEmail(UserManager<ApplicationUser> userManager)
+        public ConfirmEmail(UserManager<ApplicationUser> userManager, Captcha captcha)
         {
             _userManager = userManager;
+            _captcha = captcha;
         }
 
         /// <summary>
@@ -29,6 +31,12 @@ namespace VLO_BOARDS.Areas.Auth
         [HttpPost]
         public async Task<ActionResult> OnPostAsync(ConfirmEmailInputModel confirmEmailInput)
         {
+            if (await _captcha.VerifyCaptcha(confirmEmailInput.CaptchaResponse) < Captcha.Threshold)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
+                return this.GenBadRequestProblem();
+            }
+            
             var user = await _userManager.FindByIdAsync(confirmEmailInput.userId);
             
             if (user == null)
@@ -56,5 +64,6 @@ namespace VLO_BOARDS.Areas.Auth
     {
         public string userId { get; set; }
         public string code { get; set; }
+        public string CaptchaResponse { get; set; }
     }
 }

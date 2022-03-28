@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.WebUtilities;
+using VLO_BOARDS.Extensions;
 
 namespace VLO_BOARDS.Areas.Auth
 {
@@ -24,12 +25,15 @@ namespace VLO_BOARDS.Areas.Auth
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly EmailTemplates _emailTemplates;
+        private readonly Captcha _captcha;
 
-        public ResendEmailConfirmationController(UserManager<ApplicationUser> userManager, IEmailSender emailSender, EmailTemplates emailTemplates)
+        public ResendEmailConfirmationController(UserManager<ApplicationUser> userManager, IEmailSender emailSender,
+            EmailTemplates emailTemplates, Captcha captcha)
         {
             _userManager = userManager;
             _emailSender = emailSender;
             _emailTemplates = emailTemplates;
+            _captcha = captcha;
         }
 
         /// <summary>
@@ -40,6 +44,11 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> OnPostAsync(ResendEmailConfirmationInputModel resendEmailConfirmationInput)
         {
+            if (await _captcha.VerifyCaptcha(resendEmailConfirmationInput.CaptchaResponse) < Captcha.Threshold)
+            {
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
+                return this.GenBadRequestProblem();
+            }
             
             var user = await _userManager.FindByEmailAsync(resendEmailConfirmationInput.Email);
             if (user == null || user.EmailConfirmed)
@@ -66,8 +75,10 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class ResendEmailConfirmationInputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required] [EmailAddress]
         public string Email { get; set; }
+        
+        [Required]
+        public string CaptchaResponse { get; set; }
     }
 }

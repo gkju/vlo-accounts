@@ -17,6 +17,7 @@ using VLO_BOARDS.Auth;
 using System.Threading.Tasks;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
+using Amazon.S3;
 using CanonicalEmails;
 using IdentityServer4.Configuration;
 using Microsoft.AspNetCore.Builder;
@@ -49,9 +50,16 @@ namespace VLO_BOARDS
                 migrationsAssembly = "",
                 captchaKey = "",
                 captchaPk = "",
-                MailKey = "",
-                MailUrl = "",
-                MailDoname = "";
+                mailKey = "",
+                mailUrl = "",
+                mailDomain = "",
+                minioEndpoint = "",
+                minioSecret = "",
+                minioAccessToken = "",
+                bucketName = "boards",
+                videoBucketName = "video",
+                clamHost = "",
+                clamPort = "";
             List<string> corsorigins = new List<string>();
             byte[] pemBytes = {};
 
@@ -67,12 +75,32 @@ namespace VLO_BOARDS
                 captchaKey = Configuration["CaptchaCredentials:PublicKey"];
                 services.AddDatabaseDeveloperPageExceptionFilter();
                 corsorigins = new List<string>() {"http://localhost:3000"};
+                
+                minioEndpoint = Configuration["minio:endpoint"];
+                minioSecret = Configuration["minio:secret"];
+                minioAccessToken =  Configuration["minio:access"];
+                
+                clamHost = Configuration["Clam:Host"];
+                clamPort = Configuration["Clam:Port"];
+                
                 // TODO: remove temporary credentials from mailgun before publishing source code
-                MailKey = Configuration["Mailgun:ApiKey"];
-                MailDoname = Configuration["Mailgun:MailDoname"];
+                mailKey = Configuration["Mailgun:ApiKey"];
+                mailDomain = Configuration["Mailgun:MailDomain"];
             }
+            
+            services.AddTransient(o => new MinioConfig {BucketName = bucketName, VideoBucketName = videoBucketName});
+            services.AddTransient(o => new ClamConfig {Host = clamHost, Port = Int32.Parse(clamPort)});
+            
+            var s3config = new AmazonS3Config()
+            {
+                AuthenticationRegion = MinioConfig.AuthenticationRegion,
+                ServiceURL = minioEndpoint,
+                ForcePathStyle = true
+            };
+            
+            services.AddTransient((o) => new AmazonS3Client(minioAccessToken, minioSecret, s3config));
 
-            services.AddScoped(x => new MailgunConfig {ApiKey = MailKey, DomainName = MailDoname});
+            services.AddScoped(x => new MailgunConfig {ApiKey = mailKey, DomainName = mailDomain});
             services.AddScoped<IEmailSender, EmailSender>();
             services.AddHttpClient();
             services.AddScoped<EmailTemplates>();
@@ -80,8 +108,14 @@ namespace VLO_BOARDS
             services.AddTransient(x => new CaptchaCredentials(captchaPk, captchaKey));
             services.AddTransient<Captcha>();
             
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(appDbContextNpgsqlConnection, sql => sql.MigrationsAssembly(migrationsAssembly)));
+            services.AddScoped<FileInterceptor>();
+            
+            services.AddDbContext<ApplicationDbContext>((sp, options) =>
+            {
+                options.AddInterceptors(sp.GetRequiredService<FileInterceptor>());
+                options.UseNpgsql(appDbContextNpgsqlConnection, sql => sql.MigrationsAssembly(migrationsAssembly));
+            });
+            
             services.AddDbContext<ConfigurationDbContext>(options =>
                 options.UseNpgsql(is4DbContextNpgsqlConnection,
                     sql => sql.MigrationsAssembly(migrationsAssembly)));
@@ -108,9 +142,6 @@ namespace VLO_BOARDS
                 c.IncludeXmlComments(xmlPath);
             });
 
-            services.AddTransient<Features>(x => new Features
-                {SwaggerEnabled = Configuration.GetValue<bool>("Features:Swagger")});
-
             services.AddAspNetIdentity();
 
             var is4Builder = services.AddIdentityServer(options =>
@@ -129,8 +160,6 @@ namespace VLO_BOARDS
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
                     options.Events.RaiseSuccessEvents = true;
-                    
-                    
                 })
                 .AddConfigurationStore(options => options.ConfigureDbContext = b =>
                     b.UseNpgsql(is4DbContextNpgsqlConnection,

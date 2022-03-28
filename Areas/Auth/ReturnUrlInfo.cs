@@ -72,8 +72,7 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class ReturnUrlInputModel
     {
-        [Required]
-        [DataType(DataType.Url)]
+        [Required] [DataType(DataType.Url)]
         public string returnUrl { get; set; }
     }
     

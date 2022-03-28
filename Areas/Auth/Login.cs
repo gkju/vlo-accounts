@@ -57,9 +57,9 @@ namespace VLO_BOARDS.Areas.Auth
         [ProducesResponseType(StatusCodes.Status423Locked)]
         public async Task<ActionResult> OnPostAsync(LoginInputModel loginInput, string returnUrl = null)
         {
-            if (await _captcha.VerifyCaptcha(loginInput.CaptchaResponse) < Captcha.Threshold) 
+            if (await _captcha.VerifyCaptcha(loginInput.CaptchaResponse) < Captcha.Threshold)
             {
-                ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
                 return this.GenBadRequestProblem();
             }
             
@@ -124,16 +124,13 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class LoginInputModel
     {
-        [Required]
-        [DataType(DataType.Text)]
+        [Required] [DataType(DataType.Text)]
         public string UsernameOrEmail { get; set; }
 
-        [Required] 
-        [DataType(DataType.Password)]
+        [Required] [DataType(DataType.Password)]
         public string Password { get; set; }
 
-        [Required]
-        [Display(Name = "Zapamiętaj mnie")]
+        [Required] [Display(Name = "Zapamiętaj mnie")]
         public bool RememberMe { get; set; }
             
         [Required]

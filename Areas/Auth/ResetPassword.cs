@@ -35,7 +35,7 @@ namespace VLO_BOARDS.Areas.Auth
         public async Task<ActionResult> OnPostAsync(ResetPasswordInputModel resetPasswordInput) {
             if (await _captcha.VerifyCaptcha(resetPasswordInput.CaptchaResponse) < Captcha.Threshold)
             {
-                ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+                ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
                 return this.GenBadRequestProblem();
             }
             
@@ -64,8 +64,7 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class ResetPasswordInputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required] [EmailAddress]
         public string Email { get; set; }
 
         [Required]

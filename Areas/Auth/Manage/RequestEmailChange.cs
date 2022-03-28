@@ -45,7 +45,7 @@ public class RequestEmailChange : ControllerBase
     {
         if (await _captcha.VerifyCaptcha(emailInput.CaptchaResponse) < Captcha.Threshold)
         {
-            ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+            ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
             return this.GenBadRequestProblem();
         }
 
@@ -88,7 +88,7 @@ public class RequestEmailChange : ControllerBase
     {
         if (await _captcha.VerifyCaptcha(emailChangeInput.CaptchaResponse) < Captcha.Threshold)
         {
-            ModelState.AddModelError(Captcha.ErrorName, "Bad captcha");
+            ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
             return this.GenBadRequestProblem();
         }
 
@@ -98,7 +98,7 @@ public class RequestEmailChange : ControllerBase
         requests = requests.Where(req => req.Date.AddMinutes(30) > DateTime.Now.ToUniversalTime()).ToArray();
         if (!(requests.Length > 0))
         {
-            ModelState.AddModelError(Constants.AccountError, "Nie masz aktualnych zapytań o zmianę adresu email");
+            ModelState.AddModelError(Constants.AccountError, "Nie masz aktualnych próśb o zmianę adresu email");
             return this.GenUnprocessableProblem();
         }
 
@@ -108,8 +108,13 @@ public class RequestEmailChange : ControllerBase
         {
             user.Email = request.Email;
             user.EmailConfirmed = true;
-            
-            await _db.SaveChangesAsync();
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return Problem();
+            }
 
             return Ok("Success");
         }
@@ -121,12 +126,18 @@ public class RequestEmailChange : ControllerBase
 
 public class RequestEmailChangeInput
 {
-    [Required] [EmailAddress] public string Email { get; set; }
-    [Required] public string CaptchaResponse { get; set; }
+    [Required] [EmailAddress] 
+    public string Email { get; set; }
+    
+    [Required] 
+    public string CaptchaResponse { get; set; }
 }
 
 public class ConfirmEmailChangeInput
 {
-    [Required] public string Code { get; set; }
-    [Required] public string CaptchaResponse { get; set; }
+    [Required] 
+    public string Code { get; set; }
+    
+    [Required] 
+    public string CaptchaResponse { get; set; }
 }
