@@ -7,6 +7,7 @@ using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Cppl.Utilities.AWS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -77,14 +78,14 @@ public class FilesController : ControllerBase
         {
             return NotFound("No file of given id exists");
         }
-
-        using GetObjectResponse response = await minioClient.GetObjectAsync(file.GetFileRequest(minioConfig));
+        
+        var stream = new SeekableS3Stream(minioClient, file.Bucket, file.ObjectId);
         Response.Headers.Add("Content-Disposition", new ContentDisposition
         {
             FileName = file.FileName,
             Inline = false
         }.ToString());
 
-        return File(response.ResponseStream, file.ContentType, enableRangeProcessing: true);
+        return File(stream, file.ContentType, enableRangeProcessing: true);
     }
 }
