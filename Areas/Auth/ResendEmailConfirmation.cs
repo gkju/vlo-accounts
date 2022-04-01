@@ -57,7 +57,6 @@ namespace VLO_BOARDS.Areas.Auth
                 return Ok("Success");
             }
             
-            var userId = user.Id;
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             

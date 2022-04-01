@@ -104,6 +104,7 @@ public class RequestEmailChange : ControllerBase
 
         var hash = Encoding.UTF8.GetString(SodiumLib.HashPassword(emailChangeInput.Code, _dummySalt));
         var request = requests.FirstOrDefault(req => req.CodeHash == hash);
+
         if (request != default)
         {
             user.Email = request.Email;
@@ -113,7 +114,7 @@ public class RequestEmailChange : ControllerBase
 
             if (!result.Succeeded)
             {
-                return Problem();
+                return this.GenBadRequestProblem();
             }
 
             return Ok("Success");

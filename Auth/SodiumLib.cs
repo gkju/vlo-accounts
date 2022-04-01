@@ -10,7 +10,7 @@ namespace VLO_BOARDS.Auth
         private const string Name = "libsodium";
         public const int crypto_pwhash_argon2id_ALG_ARGON2ID13 = 2;
         public const long crypto_pwhash_argon2id_OPSLIMIT = 4;
-        public const int crypto_pwhash_argon2id_MEMLIMIT_BYTES = 273741824;
+        public const int crypto_pwhash_argon2id_MEMLIMIT_BYTES = 23741824;
         
         static SodiumLib()
         {

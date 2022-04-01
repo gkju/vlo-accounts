@@ -41,7 +41,7 @@ public class FilesController : ControllerBase
     }
 
     [HttpPost]
-    [Route("UploadFile")]
+    [Route("File")]
     public async Task<IActionResult> OnPost(IFormFile file, bool isPublic)
     {
         if (file is null)
@@ -53,7 +53,7 @@ public class FilesController : ControllerBase
         try
         {
             ApplicationUser user = await userManager.GetUserAsync(User);
-            string id = await user.UploadFile(file, serviceProvider, minioClient, clamConfig, minioConfig.BucketName, isPublic);
+            string id = await user.UploadFile(file, serviceProvider, minioConfig.BucketName, isPublic);
             return Ok(id);
         }
         catch(Exception error)
@@ -65,7 +65,7 @@ public class FilesController : ControllerBase
     }
     
     [HttpGet]
-    [Route("GetFile")]
+    [Route("File")]
     public async Task<IActionResult> GetFile(string id)
     {
         ApplicationUser user = await userManager.GetUserAsync(User);
@@ -79,7 +79,7 @@ public class FilesController : ControllerBase
             return NotFound("No file of given id exists");
         }
         
-        var stream = new SeekableS3Stream(minioClient, file.Bucket, file.ObjectId);
+        var stream = file.GetSeekableStream(minioClient);
         Response.Headers.Add("Content-Disposition", new ContentDisposition
         {
             FileName = file.FileName,
@@ -87,5 +87,15 @@ public class FilesController : ControllerBase
         }.ToString());
 
         return File(stream, file.ContentType, enableRangeProcessing: true);
+    }
+
+    [HttpDelete]
+    [Route("File")]
+    public async Task<IActionResult> DeleteFile(string id)
+    {
+        var user = await userManager.GetUserAsync(User);
+        await user.DeleteFile(id, serviceProvider);
+
+        return Ok(id);
     }
 }
