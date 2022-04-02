@@ -19,6 +19,7 @@ using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
 using CanonicalEmails;
+using IdentityModel;
 using IdentityServer4.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -59,7 +60,10 @@ namespace VLO_BOARDS
                 bucketName = "boards",
                 videoBucketName = "video",
                 clamHost = "",
-                clamPort = "";
+                clamPort = "",
+                serverDomain = "",
+                clientOrigin = "",
+                timestampDriftTolerance = "";
             List<string> corsorigins = new List<string>();
             byte[] pemBytes = {};
 
@@ -86,6 +90,10 @@ namespace VLO_BOARDS
                 // TODO: remove temporary credentials from mailgun before publishing source code
                 mailKey = Configuration["Mailgun:ApiKey"];
                 mailDomain = Configuration["Mailgun:MailDomain"];
+
+                serverDomain = Configuration["fido:serverDomain"];
+                clientOrigin = Configuration["fido:origin"];
+                timestampDriftTolerance = Configuration["fido:timestampDriftTolerance"];
             }
             
             services.AddTransient(o => new MinioConfig {BucketName = bucketName, VideoBucketName = videoBucketName});
@@ -143,6 +151,13 @@ namespace VLO_BOARDS
             });
 
             services.AddAspNetIdentity();
+            services.AddFido2(o =>
+            {
+                o.ServerDomain = serverDomain;
+                o.ServerName = "VLO Accounts";
+                o.Origin = clientOrigin;
+                o.TimestampDriftTolerance = Int32.Parse(timestampDriftTolerance);
+            });
 
             var is4Builder = services.AddIdentityServer(options =>
                 {

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using VLO_BOARDS.Auth;
 using VLO_BOARDS.Extensions;
 
@@ -29,17 +30,30 @@ public class RequestEmailChange : ControllerBase
     private readonly Captcha _captcha;
     private readonly IEmailSender _emailSender;
     private readonly EmailTemplates _emailTemplates;
+    private readonly ILogger<RequestEmailChange> _logger;
     private readonly byte[] _dummySalt = {10, 10, 10};
-    
-    public RequestEmailChange(UserManager<ApplicationUser> userManager, ApplicationDbContext db, Captcha captcha, IEmailSender emailSender, EmailTemplates emailTemplates)
+
+    public RequestEmailChange(
+        UserManager<ApplicationUser> userManager, 
+        ApplicationDbContext db, 
+        Captcha captcha, 
+        IEmailSender emailSender, 
+        EmailTemplates emailTemplates, 
+        ILogger<RequestEmailChange> logger)
     {
         _userManager = userManager;
         _db = db;
         _captcha = captcha;
         _emailSender = emailSender;
         _emailTemplates = emailTemplates;
+        _logger = logger;
     }
 
+    /// <summary>
+    /// Creates a new email change request
+    /// </summary>
+    /// <param name="emailInput"></param>
+    /// <returns></returns>
     [HttpPost]
     public async Task<ActionResult> OnPostAsync(RequestEmailChangeInput emailInput)
     {
@@ -78,9 +92,16 @@ public class RequestEmailChange : ControllerBase
         _db.EmailChangeRequests.Add(request);
         await _db.SaveChangesAsync();
         
-        return Ok("Success");
+        _logger.LogInformation("User with ID {UserId} has requested an email change", user.Id);
+        
+        return Ok();
     }
     
+    /// <summary>
+    /// Handles the email change requested previously
+    /// </summary>
+    /// <param name="emailChangeInput"></param>
+    /// <returns></returns>
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
@@ -93,7 +114,7 @@ public class RequestEmailChange : ControllerBase
         }
 
         var user = await _userManager.GetUserAsync(User);
-        
+
         var requests = await _db.EmailChangeRequests.Where(req => req.User == user).ToArrayAsync();
         requests = requests.Where(req => req.Date.AddMinutes(30) > DateTime.Now.ToUniversalTime()).ToArray();
         if (!(requests.Length > 0))
@@ -116,8 +137,10 @@ public class RequestEmailChange : ControllerBase
             {
                 return this.GenBadRequestProblem();
             }
+            
+            _logger.LogInformation("User with an ID {UserId} has successfully changed his email", user.Id);
 
-            return Ok("Success");
+            return Ok();
         }
 
         ModelState.AddModelError(Constants.InvalidCodeError, Constants.InvalidCodeStatus);
