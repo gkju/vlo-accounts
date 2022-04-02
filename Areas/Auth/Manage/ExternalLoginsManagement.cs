@@ -35,18 +35,12 @@ public class ExternalLoginsManagement : ControllerBase
         _logger = logger;
     }
 
-    public class LoginInfo
-    {
-        public List<UserLoginInfo> CurrentLogins { get; set; }
-        public List<AuthenticationScheme> AvailableLogins { get; set; }
-    }
-
     /// <summary>
     /// Returns all the available external login providers as well as the currently used ones
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public async Task<ActionResult<LoginInfo>> OnGetAsync()
+    public async Task<ActionResult<ExternalLoginInfo>> OnGetAsync()
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -58,7 +52,7 @@ public class ExternalLoginsManagement : ControllerBase
         var availableLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync())
             .Where(auth => currentLogins.All(ul => auth.Name != ul.LoginProvider))
             .ToList();
-        return Ok(new LoginInfo {CurrentLogins = currentLogins.ToList(), AvailableLogins = availableLogins.ToList()});
+        return Ok(new ExternalLoginInfo {CurrentLogins = currentLogins.ToList(), AvailableLogins = availableLogins.ToList()});
     }
 
     /// <summary>
@@ -144,4 +138,10 @@ public class ExternalLoginsManagement : ControllerBase
         
         return Redirect(redirectUrl);
     }
+}
+
+public class ExternalLoginInfo
+{
+    public List<UserLoginInfo> CurrentLogins { get; set; }
+    public List<AuthenticationScheme> AvailableLogins { get; set; }
 }

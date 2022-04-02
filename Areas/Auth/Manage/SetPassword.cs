@@ -25,13 +25,8 @@ public class SetPassword : ControllerBase
         _signInManager = signInManager;
     }
 
-    public class InputModel
-    {
-        [Required] [DataType(DataType.Password)]
-        public string NewPassword { get; set; }
-    }
-
-    public async Task<IActionResult> OnPostAsync(InputModel input)
+    [HttpPost]
+    public async Task<IActionResult> OnPostAsync(ResetPasswordInputModel resetPasswordInput)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -45,7 +40,7 @@ public class SetPassword : ControllerBase
             return this.GenBadRequestProblem();
         }
 
-        var addPasswordResult = await _userManager.AddPasswordAsync(user, input.NewPassword);
+        var addPasswordResult = await _userManager.AddPasswordAsync(user, resetPasswordInput.NewPassword);
         if (!addPasswordResult.Succeeded)
         {
             foreach (var error in addPasswordResult.Errors)
@@ -59,4 +54,10 @@ public class SetPassword : ControllerBase
 
         return Ok();
     }
+}
+
+public class ResetPasswordInputModel
+{
+    [Required] [DataType(DataType.Password)]
+    public string NewPassword { get; set; }
 }

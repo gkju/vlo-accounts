@@ -29,24 +29,13 @@ public class ChangePassword : ControllerBase
         _logger = logger;
     }
 
-    public class InputModel
-    {
-        [Microsoft.Build.Framework.Required]
-        [DataType(DataType.Password)]
-        public string OldPassword { get; set; }
-        
-        [Required]
-        [DataType(DataType.Password)]
-        public string NewPassword { get; set; }
-    }
-
     /// <summary>
     /// Changes the password (changes as in there was a different password previously)
     /// </summary>
-    /// <param name="input"></param>
+    /// <param name="changePasswordInput"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> OnPostAsync(InputModel input)
+    public async Task<IActionResult> OnPostAsync(ChangePasswordInputModel changePasswordInput)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -54,7 +43,7 @@ public class ChangePassword : ControllerBase
             return this.GenInternalError();
         }
         
-        var changePasswordResult = await _userManager.ChangePasswordAsync(user, input.OldPassword, input.NewPassword);
+        var changePasswordResult = await _userManager.ChangePasswordAsync(user, changePasswordInput.OldPassword, changePasswordInput.NewPassword);
         
         if (!changePasswordResult.Succeeded)
         {
@@ -70,4 +59,15 @@ public class ChangePassword : ControllerBase
 
         return Ok();
     }
+}
+
+public class ChangePasswordInputModel
+{
+    [Required]
+    [DataType(DataType.Password)]
+    public string OldPassword { get; set; }
+        
+    [Required]
+    [DataType(DataType.Password)]
+    public string NewPassword { get; set; }
 }

@@ -29,20 +29,14 @@ public class GdprDeleteUser : ControllerBase
         _signInManager = signInManager;
         _logger = logger;
     }
-    
-    public class InputModel
-    {
-        [DataType(DataType.Password)]
-        public string? Password { get; set; }
-    }
 
     /// <summary>
     /// Deletes the user and ALL HIS DATA PERMANENTLY
     /// </summary>
-    /// <param name="input"></param>
+    /// <param name="gdprDeleteInput"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> OnPostAsync(InputModel input)
+    public async Task<IActionResult> OnPostAsync(GdprDeleteInputModel gdprDeleteInput)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -53,7 +47,7 @@ public class GdprDeleteUser : ControllerBase
         var requirePassword = await _userManager.HasPasswordAsync(user);
         if (requirePassword)
         {
-            if (!await _userManager.CheckPasswordAsync(user, input.Password))
+            if (!await _userManager.CheckPasswordAsync(user, gdprDeleteInput.Password))
             {
                 ModelState.AddModelError(Constants.UsernameOrPasswordError, Constants.InvalidUsernameOrPasswordStatus);
                 return this.GenBadRequestProblem();
@@ -73,4 +67,10 @@ public class GdprDeleteUser : ControllerBase
 
         return Ok();
     }
+}
+
+public class GdprDeleteInputModel
+{
+    [DataType(DataType.Password)]
+    public string? Password { get; set; }
 }
