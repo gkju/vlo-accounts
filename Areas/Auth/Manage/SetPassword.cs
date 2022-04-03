@@ -25,6 +25,11 @@ public class SetPassword : ControllerBase
         _signInManager = signInManager;
     }
 
+    /// <summary>
+    /// Adds a password (for users using only hardware/external authentication)
+    /// </summary>
+    /// <param name="resetPasswordInput"></param>
+    /// <returns></returns>
     [HttpPost]
     public async Task<IActionResult> OnPostAsync(ResetPasswordInputModel resetPasswordInput)
     {

@@ -5,6 +5,7 @@ public static class Constants
     public static string AccountError = "Account";
     public static string LockedOutStatus = "Konto zablokowane";
     public static string UnconfirmedOrNonexistentStatus = "Niepotwierdzone lub usunięte konto";
+    public static string NoProfilePicture = "Użytkownik nie posiada zdjęcia profilowego";
     
     public static string TwoFaError = "2FaError";
     public static string InvalidRecoveryCodeStatus = "Niepoprawny kod odzyskiwania.";
@@ -23,4 +24,7 @@ public static class Constants
 
     public static string InvalidCodeError = "Code";
     public static string InvalidCodeStatus = "Niepoprawny kod";
+
+    public static string IdError = "Id";
+    public static string InvalidIdStatus = "Niepoprawne Id";
 }
