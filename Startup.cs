@@ -31,7 +31,6 @@ namespace VLO_BOARDS
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
-            
             Configuration = configuration;
             env = environment;
         }

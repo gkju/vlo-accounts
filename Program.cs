@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Mcrio.Configuration.Provider.Docker.Secrets;
 
 namespace VLO_BOARDS
 {
@@ -21,6 +22,10 @@ namespace VLO_BOARDS
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.ConfigureAppConfiguration(c =>
+                    {
+                        c.AddDockerSecrets();
+                    });
                 });
     }
 }
