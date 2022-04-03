@@ -1,4 +1,6 @@
-﻿using AccountsData.Data;
+﻿using System.Net;
+using System.Threading.Tasks;
+using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +38,16 @@ public static class AspNetIdentityStartup
         {
             options.LoginPath = "/Login";
             options.LogoutPath = "/Logout";
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = (int) HttpStatusCode.Unauthorized;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = (int) HttpStatusCode.Forbidden;
+                return Task.CompletedTask;
+            };
         });
         
         return services;

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
 using VLO_BOARDS.Extensions;
 
@@ -78,15 +79,8 @@ public class FilesController : ControllerBase
         {
             return NotFound("No file of given id exists");
         }
-        
-        var stream = file.GetSeekableStream(minioClient);
-        Response.Headers.Add("Content-Disposition", new ContentDisposition
-        {
-            FileName = file.FileName,
-            Inline = false
-        }.ToString());
 
-        return File(stream, file.ContentType, enableRangeProcessing: true);
+        return Ok(file.GetSignedUrl(minioClient));
     }
 
     [HttpDelete]

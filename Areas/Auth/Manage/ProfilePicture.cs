@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using AccountsData.Data;
@@ -65,12 +66,12 @@ public class ProfilePicture : ControllerBase
         }
 
         var file = user.ProfilePicture.Picture;
-        var fileStream = file.GetSeekableStream(_minioClient);
-        return File(fileStream, file.ContentType, true);
+
+        return Ok(file.GetSignedUrl(_minioClient));
     }
 
     [HttpPost]
-    public async Task<IActionResult> OnPostAsync(IFormFile picture)
+    public async Task<IActionResult> OnPostAsync([Required] IFormFile picture)
     {
         var user = await GetUserAsync();
         if (user == default)
