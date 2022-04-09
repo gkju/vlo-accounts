@@ -207,7 +207,8 @@ namespace VLO_BOARDS
                     {
                         builder.WithOrigins(corsorigins.ToArray())
                             .AllowAnyHeader()
-                            .AllowAnyMethod();
+                            .AllowAnyMethod()
+                            .AllowCredentials();
                     });
             });
         }

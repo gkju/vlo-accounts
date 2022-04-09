@@ -43,6 +43,9 @@ public class FilesController : ControllerBase
 
     [HttpPost]
     [Route("File")]
+    [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> OnPost(IFormFile file, bool isPublic)
     {
         if (file is null)
@@ -67,6 +70,9 @@ public class FilesController : ControllerBase
     
     [HttpGet]
     [Route("File")]
+    [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(500)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetFile(string id)
     {
         ApplicationUser user = await userManager.GetUserAsync(User);
@@ -85,6 +91,8 @@ public class FilesController : ControllerBase
 
     [HttpDelete]
     [Route("File")]
+    [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> DeleteFile(string id)
     {
         var user = await userManager.GetUserAsync(User);

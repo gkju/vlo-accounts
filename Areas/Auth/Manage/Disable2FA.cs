@@ -33,6 +33,9 @@ public class Disable2FA : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpPost]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(typeof(BadRequestResult), 400)]
+    [ProducesResponseType(typeof(ObjectResult), 500)]
     public async Task<IActionResult> OnPostAsync()
     {
         var user = await _userManager.GetUserAsync(User);

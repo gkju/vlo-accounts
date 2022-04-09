@@ -45,6 +45,8 @@ public class EnableTotp2FA : ControllerBase
     /// </summary>
     /// <returns> The shared key and uri for TOTP </returns>
     [HttpGet]
+    [ProducesResponseType(typeof(KeyQrUriTuple), 200)]
+    [ProducesResponseType(typeof(ObjectResult), 500)]
     public async Task<IActionResult> GetAsync()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -66,6 +68,9 @@ public class EnableTotp2FA : ControllerBase
     /// <param name="code"></param>
     /// <returns></returns>
     [HttpPost]
+    [ProducesResponseType(typeof(string[]), 200)]
+    [ProducesResponseType(typeof(BadRequestResult), 400)]
+    [ProducesResponseType(typeof(ObjectResult), 500)]
     public async Task<ActionResult<string[]>> OnPostAsync(string code)
     {
         var user = await _userManager.GetUserAsync(User);

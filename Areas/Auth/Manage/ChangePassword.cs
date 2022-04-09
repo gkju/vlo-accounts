@@ -35,6 +35,9 @@ public class ChangePassword : ControllerBase
     /// <param name="changePasswordInput"></param>
     /// <returns></returns>
     [HttpPost]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(500)]
     public async Task<IActionResult> OnPostAsync(ChangePasswordInputModel changePasswordInput)
     {
         var user = await _userManager.GetUserAsync(User);
