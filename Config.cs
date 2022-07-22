@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using IdentityServer4;
-using IdentityServer4.Models;
+using Duende.IdentityServer;
+using Duende.IdentityServer.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Writers;
@@ -26,7 +26,7 @@ namespace VLO_BOARDS
                 Enabled = _env.IsDevelopment(),
                 Name = "VLO_BOARDS_API",
                 DisplayName = "VLO Boards API",
-                AllowedAccessTokenSigningAlgorithms = new List<string> {"ES512"},
+                AllowedAccessTokenSigningAlgorithms = new List<string> {"RS256"},
                 Scopes = new List<string> {"VLO_BOARDS"},
                 UserClaims = new List<string> {"name", "email", "openid", "profile"},
                 ApiSecrets = new List<Secret> {new Secret("SECRET1")}
@@ -56,7 +56,7 @@ namespace VLO_BOARDS
                     RequirePkce = true,
                     RequireClientSecret = false,
                     ClientSecrets = new List<Secret> {},
-                AllowedIdentityTokenSigningAlgorithms = new List<string> {"ES512"},
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
                 AllowedCorsOrigins = new List<string>() {"http://localhost:3000"}
             }
         };

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
-using IdentityServer4;
-using IdentityServer4.EntityFramework.DbContexts;
+using Duende.IdentityServer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,8 +18,9 @@ using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
 using CanonicalEmails;
+using Duende.IdentityServer.Configuration;
+using Duende.IdentityServer.EntityFramework.DbContexts;
 using IdentityModel;
-using IdentityServer4.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
@@ -64,7 +64,6 @@ namespace VLO_BOARDS
                 clientOrigin = "",
                 timestampDriftTolerance = "";
             List<string> corsorigins = new List<string>();
-            byte[] pemBytes = {};
 
             if (env.IsDevelopment())
             {
@@ -73,7 +72,6 @@ namespace VLO_BOARDS
                 appDbContextNpgsqlConnection = Configuration.GetConnectionString("NPGSQL");
                 is4DbContextNpgsqlConnection = Configuration.GetConnectionString("IDENTITYDB");
                 migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-                pemBytes = Convert.FromBase64String(@Configuration.GetSection("ISKeys:ECDSAPEM").Get<string>());
                 captchaPk = Configuration["CaptchaCredentials:PrivateKey"];
                 captchaKey = Configuration["CaptchaCredentials:PublicKey"];
                 services.AddDatabaseDeveloperPageExceptionFilter();
@@ -183,12 +181,7 @@ namespace VLO_BOARDS
                         sql => sql.MigrationsAssembly(migrationsAssembly)))
                 .AddAspNetIdentity<ApplicationUser>();
             
-            var ecdsa = ECDsa.Create();
-            ecdsa.ImportECPrivateKey(pemBytes, out _);
-            var ecdsaKey = new ECDsaSecurityKey(ecdsa) {KeyId = "secp521r1key"};
-
-            is4Builder.AddSigningCredential(ecdsaKey, IdentityServerConstants.ECDsaSigningAlgorithm.ES512);
-
+            services.AddAutoMapper(typeof(Startup));
             services.AddControllersWithViews();
             
             services.AddAuthentication()

@@ -8,7 +8,7 @@ using System.Security.Policy;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using CanonicalEmails;
-using IdentityServer4.Services;
+using Duende.IdentityServer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -74,9 +74,9 @@ namespace VLO_BOARDS.Areas.Auth
                 returnUrl = Url.Content("~/");
             }
 
-            if (new EmailAddressAttribute().IsValid(loginInput.UsernameOrEmail))
+            if (new EmailAddressAttribute().IsValid(loginInput.UserNameOrEmail))
             {
-                var email = new MailAddress(loginInput.UsernameOrEmail);
+                var email = new MailAddress(loginInput.UserNameOrEmail);
                 email = Normalizer.Normalize(email);
                 var user = await _userManager.FindByEmailAsync(email.ToString());
                 if (user == null)
@@ -85,10 +85,10 @@ namespace VLO_BOARDS.Areas.Auth
                     return this.GenBadRequestProblem();
                 }
 
-                loginInput.UsernameOrEmail = user.UserName;
+                loginInput.UserNameOrEmail = user.UserName;
             }
 
-            var result = await _signInManager.PasswordSignInAsync(loginInput.UsernameOrEmail, loginInput.Password, loginInput.RememberMe, lockoutOnFailure: true);
+            var result = await _signInManager.PasswordSignInAsync(loginInput.UserNameOrEmail, loginInput.Password, loginInput.RememberMe, lockoutOnFailure: true);
             
             if (result.Succeeded)
             {
@@ -125,7 +125,7 @@ namespace VLO_BOARDS.Areas.Auth
     public class LoginInputModel
     {
         [Required] [DataType(DataType.Text)]
-        public string UsernameOrEmail { get; set; }
+        public string UserNameOrEmail { get; set; }
 
         [Required] [DataType(DataType.Password)]
         public string Password { get; set; }
@@ -139,15 +139,15 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class LoginResult
     {
-        public string message { get; set; }
-        public bool redirect { get; set; }
-        public string returnUrl { get; set; }
+        public string Message { get; set; }
+        public bool Redirect { get; set; }
+        public string ReturnUrl { get; set; }
 
         public LoginResult(string message, bool redirect = false, string returnUrl = "")
         {
-            this.message = message;
-            this.redirect = redirect;
-            this.returnUrl = returnUrl;
+            this.Message = message;
+            this.Redirect = redirect;
+            this.ReturnUrl = returnUrl;
         }
     }
 }

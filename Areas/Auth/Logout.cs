@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
-using IdentityServer4.Services;
+using Duende.IdentityServer.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
