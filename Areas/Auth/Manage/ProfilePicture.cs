@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
 using VLO_BOARDS.Extensions;
 
@@ -61,8 +62,7 @@ public class ProfilePicture : ControllerBase
 
         if (user.ProfilePicture == null)
         {
-            ModelState.AddModelError(Constants.AccountError, Constants.NoProfilePicture);
-            return this.GenBadRequestProblem();
+            return Ok(Constants.NoProfilePicture);
         }
 
         var file = user.ProfilePicture.Picture;
@@ -80,6 +80,18 @@ public class ProfilePicture : ControllerBase
             return this.GenBadRequestProblem();
         }
 
+        if (!picture.ContentType.StartsWith("image"))
+        {
+            ModelState.AddModelError("File", "File type is not supported");
+            return this.GenBadRequestProblem();
+        }
+        
+        if(picture.Length > 20000000)
+        {
+            ModelState.AddModelError("File", "File is too large");
+            return this.GenBadRequestProblem();
+        }
+
         var fileId = await user.UploadFile(picture, _serviceProvider, _minioConfig.BucketName, false, false);
         var file = await _dbContext.Files.FindAsync(fileId);
         
@@ -91,7 +103,8 @@ public class ProfilePicture : ControllerBase
         
         if (user.ProfilePicture != null)
         {
-            _dbContext.ProfilePictures.Remove(user.ProfilePicture);
+            user.DeleteProfilePicture(_dbContext);
+            await _dbContext.SaveChangesAsync();
         }
         var entry = await _dbContext.ProfilePictures.AddAsync(profilePicture);
         user.ProfilePicture = entry.Entity;

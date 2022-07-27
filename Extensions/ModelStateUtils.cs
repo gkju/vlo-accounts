@@ -26,7 +26,7 @@ public static class ModelStateUtils
     {
         return controller.StatusCode(StatusCodes.Status500InternalServerError, GenProblem(StatusCodes.Status500InternalServerError, controller.ModelState));
     }
-    
+
     public static ObjectResult GenLockedProblem(this ControllerBase controller)
     {
         return controller.StatusCode(StatusCodes.Status423Locked, GenProblem(StatusCodes.Status423Locked, controller.ModelState));
