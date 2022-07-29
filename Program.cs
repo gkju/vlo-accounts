@@ -25,7 +25,9 @@ namespace VLO_BOARDS
                     webBuilder.ConfigureAppConfiguration(c =>
                     {
                         c.AddDockerSecrets();
+                        c.AddJsonFile("appsettings.Secret.json");
                     });
+                    webBuilder.UseSentry();
                 });
     }
 }

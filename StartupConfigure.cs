@@ -32,7 +32,6 @@ namespace VLO_BOARDS
             
             IS4Utils.InitializeDatabase(app, new Config(env));
             EnsureBucketsExits(minioClient, minioConfig).Wait();
-            
 
             if (env.IsDevelopment())
             {
@@ -78,6 +77,7 @@ namespace VLO_BOARDS
                     name: "default",
                     pattern: "/api/{controller}/{action=Index}/{id?}");
             });
+            app.UseSentryTracing();
 
             if (env.IsDevelopment())
             {

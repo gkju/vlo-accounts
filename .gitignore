@@ -246,3 +246,4 @@ vlo-accounts-frontend/.env.production.local
 vlo-accounts-frontend/npm-debug.log*
 vlo-accounts-frontend/yarn-debug.log*
 vlo-accounts-frontend/yarn-error.log*
+/appsettings.Secret.json

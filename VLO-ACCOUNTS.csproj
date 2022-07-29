@@ -27,8 +27,6 @@
     <PackageReference Include="Duende.IdentityServer.EntityFramework.Storage" Version="6.1.2" />
     <PackageReference Include="Duende.IdentityServer.Storage" Version="6.1.2" />
     <PackageReference Include="libsodium" Version="1.0.18.2" />
-    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="11.3.0" />
-    <PackageReference Include="Magick.NET.Core" Version="11.3.0" />
     <PackageReference Include="Mcrio.Configuration.Provider.Docker.Secrets" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.7" />
@@ -67,6 +65,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.5" />
     <PackageReference Include="PreMailer.Net" Version="2.4.0" />
     <PackageReference Include="RestSharp" Version="108.0.2-alpha.0.5" />
+    <PackageReference Include="Sentry" Version="3.20.1" />
+    <PackageReference Include="Sentry.AspNetCore" Version="3.20.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="6.1.0" />

@@ -34,12 +34,6 @@ public class EnableTotp2FA : ControllerBase
         _logger = logger;
     }
 
-    private class KeyQrUriTuple
-    {
-        public string SharedKey { get; set; }
-        public string AuthenticatorUri { get; set; }
-    }
-
     /// <summary>
     /// Initiates the request to add TOTP to the account by returning the appropriate TOTP uri
     /// </summary>
@@ -150,4 +144,10 @@ public class EnableTotp2FA : ControllerBase
             _urlEncoder.Encode(email),
             unformattedKey);
     }
+}
+
+public class KeyQrUriTuple
+{
+    public string SharedKey { get; set; }
+    public string AuthenticatorUri { get; set; }
 }
