@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using Duende.IdentityServer;
@@ -17,6 +18,7 @@ using System.Threading.Tasks;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
+using AngleSharp.Html.Dom;
 using CanonicalEmails;
 using Duende.IdentityServer.Configuration;
 using Duende.IdentityServer.EntityFramework.DbContexts;
@@ -61,14 +63,21 @@ namespace VLO_BOARDS
                 clamHost = "",
                 clamPort = "",
                 serverDomain = "",
-                clientOrigin = "",
-                timestampDriftTolerance = "";
-            List<string> corsorigins = new List<string>();
+                timestampDriftTolerance = "",
+                msClientId = "",
+                msClientSecret = "",
+                twClientId = "",
+                twClientSecret = "";
+            List<string> corsorigins = new List<string>(), clientOrigins = new List<string>();
 
-            if (env.IsDevelopment())
+            // get configuration options (!add docker secrets for prod)
             {
                 googleClientId = Configuration["GoogleAuth:ClientId"];
                 googleSecret = Configuration["GoogleAuth:SecretKey"];
+                msClientId = Configuration["MicrosoftAuth:ClientId"];
+                msClientSecret = Configuration["MicrosoftAuth:SecretKey"];
+                twClientId = Configuration["TwitterAuth:ClientId"];
+                twClientSecret = Configuration["TwitterAuth:SecretKey"];
                 appDbContextNpgsqlConnection = Configuration.GetConnectionString("NPGSQL");
                 is4DbContextNpgsqlConnection = Configuration.GetConnectionString("IDENTITYDB");
                 migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
@@ -89,7 +98,7 @@ namespace VLO_BOARDS
                 mailDomain = Configuration["Mailgun:MailDomain"];
 
                 serverDomain = Configuration["fido:serverDomain"];
-                clientOrigin = Configuration["fido:origin"];
+                clientOrigins = Configuration.GetSection("fido:origins").Get<List<string>>();
                 timestampDriftTolerance = Configuration["fido:timestampDriftTolerance"];
             }
             
@@ -152,7 +161,7 @@ namespace VLO_BOARDS
             {
                 o.ServerDomain = serverDomain;
                 o.ServerName = "VLO Accounts";
-                o.Origin = clientOrigin;
+                o.Origins = new HashSet<string>(clientOrigins);
                 o.TimestampDriftTolerance = Int32.Parse(timestampDriftTolerance);
             });
 
@@ -185,6 +194,18 @@ namespace VLO_BOARDS
             services.AddControllersWithViews();
             
             services.AddAuthentication()
+                .AddMicrosoftAccount(options =>
+                {
+                    options.ClientId = msClientId;
+                    options.ClientSecret = msClientSecret;
+                    options.SaveTokens = true;
+                })
+                .AddTwitter(options =>
+                {
+                    options.ConsumerKey = twClientId;
+                    options.ConsumerSecret = twClientSecret;
+                    options.SaveTokens = true;
+                })
                 .AddGoogle(options =>
                 {
                     options.ClientId = googleClientId;

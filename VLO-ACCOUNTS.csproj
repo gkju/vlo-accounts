@@ -30,7 +30,9 @@
     <PackageReference Include="Mcrio.Configuration.Provider.Docker.Secrets" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="6.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="6.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.Internal" Version="6.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="6.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Html.Abstractions" Version="2.2.0" />

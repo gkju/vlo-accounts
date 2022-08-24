@@ -58,7 +58,27 @@ namespace VLO_BOARDS
                     ClientSecrets = new List<Secret> {},
                 AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
                 AllowedCorsOrigins = new List<string>() {"http://localhost:3000"}
-            }
+            },
+            new Client
+            {
+                Enabled = true,
+                ClientId = "VLO_BOARDS",
+                ClientName = "VLO_BOARDS",
+                AllowedGrantTypes = GrantTypes.Code,
+                RedirectUris = { "https://suvlo.pl/login-callback" },
+                PostLogoutRedirectUris = { "https://suvlo.pl/logout-callback" },
+                AllowedScopes = new List<string>
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "VLO_BOARDS"
+                },
+                RequirePkce = true,
+                RequireClientSecret = false,
+                ClientSecrets = new List<Secret> {},
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
+                AllowedCorsOrigins = new List<string>() {"https://suvlo.pl"}
+            },
         };
     }
 }

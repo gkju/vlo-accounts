@@ -119,7 +119,7 @@ namespace VLO_BOARDS
                 return new IdentityError
                 {
                     Code = nameof(PasswordRequiresNonAlphanumeric),
-                    Description = "Hasło musi zawierać co najmniej jeden znak alfanumeryczny"
+                    Description = "Hasło musi zawierać co najmniej jeden znak, który nie jest alfanumeryczny"
                 };
             }
 
@@ -155,18 +155,18 @@ namespace VLO_BOARDS
                 return new IdentityError
                 {
                     Code = nameof(PasswordRequiresUniqueChars),
-                    Description = $"Hasło musi zawierać co najmniej {uniqueChars} unikalnych znaków"
+                    Description = $"Hasło musi zawierać co najmniej {uniqueChars} unikatowe znaki"
                 };
             }
 
             public override IdentityError RecoveryCodeRedemptionFailed()
+            {
+                return new IdentityError
                 {
-                    return new IdentityError
-                    {
-                        Code = nameof(RecoveryCodeRedemptionFailed),
-                        Description = $"Niepoprawny kod odzyskiwania, spróbuj ponownie lub skonsultuj się z su"
-                    }; }
-                }
+                    Code = nameof(RecoveryCodeRedemptionFailed),
+                    Description = $"Niepoprawny kod odzyskiwania, spróbuj ponownie lub skonsultuj się z su"
+                }; }
+            }
             
     }
 }

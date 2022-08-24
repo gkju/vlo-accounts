@@ -27,4 +27,7 @@ public static class Constants
 
     public static string IdError = "Id";
     public static string InvalidIdStatus = "Niepoprawne Id";
+    
+    public static string PhoneNumberError = "PhoneNumber";
+    public static string InvalidPhoneNumberStatus = "Niepoprawny numer telefonu";
 }

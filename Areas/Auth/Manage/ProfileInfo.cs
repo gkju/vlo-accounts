@@ -34,7 +34,15 @@ public class ProfileInfo : ControllerBase
     public async Task<IActionResult> OnGetAsync()
     {
         var user = await _userManager.GetUserAsync(User);
-        user.PasswordHash = "-";
+        if (user.PasswordHash is not null)
+        {
+            user.PasswordHash = "********";
+        }
+        else
+        {
+            user.PasswordHash = "-";
+        }
+        
         return Ok(user);
     }
 }

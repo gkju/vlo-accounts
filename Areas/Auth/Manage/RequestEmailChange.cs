@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Mail;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using AccountsData.Data;
@@ -135,10 +136,11 @@ public class RequestEmailChange : ControllerBase
 
             if (!result.Succeeded)
             {
+                ModelState.AddModelError(Constants.AccountError, "Nie udało się zmienić adresu email. Upewnij się, że inne konta nie korzystają z tego adresu email.");
                 return this.GenBadRequestProblem();
             }
             
-            _logger.LogInformation("User with an ID {UserId} has successfully changed his email", user.Id);
+            _logger.LogInformation("User with the ID {UserId} has successfully changed his email", user.Id);
 
             return Ok();
         }
@@ -150,6 +152,8 @@ public class RequestEmailChange : ControllerBase
 
 public class RequestEmailChangeInput
 {
+    public string Id = Guid.NewGuid().ToString();
+    
     [Required] [EmailAddress] 
     public string Email { get; set; }
     

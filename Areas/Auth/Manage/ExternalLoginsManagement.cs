@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
@@ -40,6 +41,7 @@ public class ExternalLoginsManagement : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
+    [ProducesResponseType(typeof(ExternalLoginInfo), 200)]
     public async Task<ActionResult<ExternalLoginInfo>> OnGetAsync()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -52,7 +54,12 @@ public class ExternalLoginsManagement : ControllerBase
         var availableLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync())
             .Where(auth => currentLogins.All(ul => auth.Name != ul.LoginProvider))
             .ToList();
-        return Ok(new ExternalLoginInfo {CurrentLogins = currentLogins.ToList(), AvailableLogins = availableLogins.ToList()});
+        var sAvailableLogins = new List<SimplifiedAuthenticationScheme>();
+        foreach (var login in availableLogins)
+        {
+            sAvailableLogins.Add(new SimplifiedAuthenticationScheme(login));
+        }
+        return Ok(new ExternalLoginInfo {CurrentLogins = currentLogins.ToList(), AvailableLogins = sAvailableLogins});
     }
 
     /// <summary>
@@ -143,5 +150,17 @@ public class ExternalLoginsManagement : ControllerBase
 public class ExternalLoginInfo
 {
     public List<UserLoginInfo> CurrentLogins { get; set; }
-    public List<AuthenticationScheme> AvailableLogins { get; set; }
+    public List<SimplifiedAuthenticationScheme> AvailableLogins { get; set; }
+}
+
+public class SimplifiedAuthenticationScheme
+{
+    public string Name { get; set; }
+    public string DisplayName { get; set; }
+    
+    public SimplifiedAuthenticationScheme(AuthenticationScheme scheme)
+    {
+        Name = scheme.Name;
+        DisplayName = scheme.DisplayName;
+    }
 }

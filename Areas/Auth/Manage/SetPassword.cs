@@ -59,6 +59,25 @@ public class SetPassword : ControllerBase
 
         return Ok();
     }
+
+    [HttpPut]
+    public async Task<ActionResult> OnPutAsync(string pw)
+    {
+        foreach (var validator in _userManager.PasswordValidators)
+        {
+            var result = await validator.ValidateAsync(_userManager, null, pw);
+            if(!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(Constants.UsernameOrPasswordError, error.Description);
+                }
+                return this.GenBadRequestProblem();
+            }
+        }
+
+        return Ok();
+    }
 }
 
 public class ResetPasswordInputModel

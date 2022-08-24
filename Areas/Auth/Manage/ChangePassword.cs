@@ -18,15 +18,18 @@ public class ChangePassword : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ILogger<ChangePassword> _logger;
+    private readonly Captcha _captcha;
 
     public ChangePassword(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager, 
-        ILogger<ChangePassword> logger)
+        ILogger<ChangePassword> logger,
+        Captcha captcha)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _captcha = captcha;
     }
 
     /// <summary>
@@ -40,6 +43,12 @@ public class ChangePassword : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> OnPostAsync(ChangePasswordInputModel changePasswordInput)
     {
+        if (await _captcha.VerifyCaptcha(changePasswordInput.CaptchaResponse) < Captcha.Threshold)
+        {
+            ModelState.AddModelError(Captcha.ErrorName, Captcha.ErrorStatus);
+            return this.GenBadRequestProblem();
+        }
+        
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
@@ -73,4 +82,7 @@ public class ChangePasswordInputModel
     [Required]
     [DataType(DataType.Password)]
     public string NewPassword { get; set; }
+    
+    [Required]
+    public string CaptchaResponse { get; set; }
 }

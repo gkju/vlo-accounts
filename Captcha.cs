@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using RestSharp;
 
 namespace VLO_BOARDS
 {
@@ -35,16 +36,17 @@ namespace VLO_BOARDS
                 throw new ArgumentException("Invalid response str");
             }
             
-            var client = _clientFactory.CreateClient();
+            var client = new RestClient("https://www.google.com/recaptcha/api/");
 
-            string url =
-                $"https://www.google.com/recaptcha/api/siteverify?secret={_credentials.privateKey}&response={response}";
-
-            var httpResponse = await client.PostAsync(url, new StringContent(""));
+            var req = new RestRequest("siteverify");
             
-            var googleRes = JsonSerializer.Deserialize<GoogleResponse>(await httpResponse.Content.ReadAsStringAsync());
+            req.AddParameter("secret", _credentials.PrivateKey);
+            req.AddParameter("response", response);
 
-            if (googleRes == null)
+            var res = await client.ExecutePostAsync<GoogleResponse>(req);
+            var googleRes = res.Data;
+            
+            if (googleRes is null)
             {
                 return -1;
             }
@@ -52,16 +54,22 @@ namespace VLO_BOARDS
             return googleRes.score;
         }
     }
+    
+    public class CaptchaApiParams
+    {
+        public string secret;
+        public string response;
+    }
 
     public class CaptchaCredentials
     {
-        public readonly string privateKey;
-        public readonly string publicKey;
+        public readonly string PrivateKey;
+        public readonly string PublicKey;
         
         public CaptchaCredentials(string privateKey, string publicKey)
         {
-            this.privateKey = privateKey;
-            this.publicKey = publicKey;
+            this.PrivateKey = privateKey;
+            this.PublicKey = publicKey;
         }
     }
 
