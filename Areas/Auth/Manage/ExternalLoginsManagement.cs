@@ -78,11 +78,13 @@ public class ExternalLoginsManagement : ControllerBase
         }
 
         var result = await _userManager.RemoveLoginAsync(user, loginProvider, providerKey);
-        if (!result.Succeeded)
+        if (!result.Succeeded || result.Errors.Any())
         {
             ModelState.AddModelError(Constants.AccountError, Constants.IneligibleForLoginRemoval);
             return this.GenBadRequestProblem();
         }
+
+        await _userManager.UpdateAsync(user);
         
         _logger.LogInformation("User with ID {UserId} has deleted {Provider} login from his account", user.Id, loginProvider);
 
@@ -112,7 +114,7 @@ public class ExternalLoginsManagement : ControllerBase
     /// <returns></returns>
     [Route("Callback")]
     [HttpGet]
-    public async Task<IActionResult> OnCallbackGetAsync()
+    public async Task<IActionResult> OnCallbackGetAsync(string returnUrl = null, string remoteError = null)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -137,9 +139,11 @@ public class ExternalLoginsManagement : ControllerBase
             return Redirect(redirectUrl);
         }
 
+        user.HandleExternalAuth(info);
+        
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-        redirectUrl = _emailTemplates.GenerateUrl("/Manage/ExternalLogins").ToString();
+        redirectUrl = _emailTemplates.GenerateUrl("/ExternalLogins").ToString();
         
         _logger.LogInformation("User with ID {UserId} has added an external login with {Provider}", user.Id, info.LoginProvider);
         

@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace VLO_BOARDS.Areas.Auth.Manage;
@@ -16,13 +19,16 @@ public class ProfileInfo : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<GenerateRecoveryCodes> _logger;
-
+    private readonly ApplicationDbContext _db;
+    
     public ProfileInfo(
         UserManager<ApplicationUser> userManager,
-        ILogger<GenerateRecoveryCodes> logger)
+        ILogger<GenerateRecoveryCodes> logger,
+        ApplicationDbContext db)
     {
         _userManager = userManager;
         _logger = logger;
+        _db = db;
     }
 
     /// <summary>
@@ -33,7 +39,16 @@ public class ProfileInfo : ControllerBase
     [ProducesResponseType(typeof(ApplicationUser), 200)]
     public async Task<IActionResult> OnGetAsync()
     {
-        var user = await _userManager.GetUserAsync(User);
+        var userP = await _userManager.GetUserAsync(User);
+        var user = await _db.Users
+            .Include(u => u.FidoCredentials)
+            .Where(u => u.Id == userP.Id)
+            .FirstOrDefaultAsync();
+        foreach (var cred in user.FidoCredentials)
+        {
+            cred.Owner = null;
+        }
+        
         if (user.PasswordHash is not null)
         {
             user.PasswordHash = "********";

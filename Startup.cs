@@ -148,7 +148,7 @@ namespace VLO_BOARDS
                 }});
                 
                 c.CustomSchemaIds(type => type.ToString());
-
+                c.CustomSchemaIds(type => type.FullName.Replace("+", "_"));
                 c.EnableAnnotations();
 
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";

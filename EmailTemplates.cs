@@ -64,6 +64,7 @@ namespace VLO_BOARDS
                 route = "/" + route;
             }
             var url = BaseOrigin + route;
+            qp ??= new Dictionary<string, string>();
             var genUrl = new Uri(QueryHelpers.AddQueryString(url, qp));
             return genUrl;
         }

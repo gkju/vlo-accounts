@@ -49,9 +49,9 @@ public class Logout : ControllerBase
     /// </summary>
     /// <param name="logoutId"></param>
     /// <returns></returns>
-    [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType(typeof(LogoutResult), 200)]
+    [HttpGet]
     public async Task<IActionResult> OnGet(string logoutId)
     {
         var request = await _interactionService.GetLogoutContextAsync(logoutId);
@@ -62,10 +62,10 @@ public class Logout : ControllerBase
 
         return BadRequest();
     }
-
-    [HttpPost]
+    
     [Authorize]
     [ProducesResponseType(typeof(LogoutResult), 200)]
+    [HttpPost]
     public async Task<IActionResult> OnPost(string logoutId)
     {
         await _signInManager.SignOutAsync();
