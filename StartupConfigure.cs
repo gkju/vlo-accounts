@@ -15,6 +15,8 @@ namespace VLO_BOARDS
         /// This method configures the app
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, AmazonS3Client minioClient, MinioConfig minioConfig)
         {
+            app.UseForwardedHeaders();
+            
             if (env.IsDevelopment())
             {
                 app.UseCookiePolicy(new CookiePolicyOptions
@@ -88,7 +90,7 @@ namespace VLO_BOARDS
             }
         }
         
-        private async Task EnsureBucketsExits(AmazonS3Client client, MinioConfig minioConfig)
+        public static async Task EnsureBucketsExits(AmazonS3Client client, MinioConfig minioConfig)
         {
             var buckets = await client.ListBucketsAsync();
             var bucketNames = new List<string>();

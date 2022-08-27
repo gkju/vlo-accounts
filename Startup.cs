@@ -83,8 +83,8 @@ namespace VLO_BOARDS
                 migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
                 captchaPk = Configuration["CaptchaCredentials:PrivateKey"];
                 captchaKey = Configuration["CaptchaCredentials:PublicKey"];
-                services.AddDatabaseDeveloperPageExceptionFilter();
-                corsorigins = new List<string>() {"http://localhost:3000"};
+                
+                corsorigins = Configuration.GetSection("cors:origins").Get<List<string>>();
                 
                 minioEndpoint = Configuration["minio:endpoint"];
                 minioSecret = Configuration["minio:secret"];
@@ -100,6 +100,12 @@ namespace VLO_BOARDS
                 serverDomain = Configuration["fido:serverDomain"];
                 clientOrigins = Configuration.GetSection("fido:origins").Get<List<string>>();
                 timestampDriftTolerance = Configuration["fido:timestampDriftTolerance"];
+            }
+
+            if (env.IsDevelopment())
+            {
+                services.AddDatabaseDeveloperPageExceptionFilter();
+                corsorigins.Add("http://localhost:3000");
             }
             
             services.AddTransient(o => new MinioConfig {BucketName = bucketName, VideoBucketName = videoBucketName});

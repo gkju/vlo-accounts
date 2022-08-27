@@ -93,13 +93,13 @@ namespace VLO_BOARDS.Areas.Auth
             
             if (remoteError != null)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Błąd zewnętrzny: {remoteError}"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Błąd zewnętrzny: {remoteError}"}}).AbsoluteUri;
                 return Redirect(redirectUrl);
             }
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Nie udało się zalogować przez zewnętrzne konto, ponieważ serwer nie dostał żadnej informacji o koncie"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", $"Nie udało się zalogować przez zewnętrzne konto, ponieważ serwer nie dostał żadnej informacji o koncie"}}).AbsoluteUri;
                 return Redirect(redirectUrl);
             }
 
@@ -117,18 +117,18 @@ namespace VLO_BOARDS.Areas.Auth
 
             if (result.IsNotAllowed)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", Constants.UnconfirmedOrNonexistentStatus}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"error", Constants.UnconfirmedOrNonexistentStatus}}).AbsoluteUri;
                 return Redirect(redirectUrl);
             }
 
             if (result.RequiresTwoFactor)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"prompt2Fa", "true"}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"prompt2Fa", "true"}}).AbsoluteUri;
                 return Redirect(redirectUrl);
             }
             if (result.IsLockedOut)
             {
-                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", Constants.LockedOutStatus}}).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/Login", new Dictionary<string, string>() {{"error", Constants.LockedOutStatus}}).AbsoluteUri;
                 return Redirect(redirectUrl);
             }
             else
@@ -150,7 +150,7 @@ namespace VLO_BOARDS.Areas.Auth
                 }
                 
                 
-                var redirectUrl = _emailTemplates.GenerateUrl("/RegisterExternalLogin", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"providerDisplayName", info.ProviderDisplayName}, {"email", email}, {"username", username} }).ToString();
+                var redirectUrl = _emailTemplates.GenerateUrl("/RegisterExternalLogin", new Dictionary<string, string>{{"returnUrl", returnUrl}, {"providerDisplayName", info.ProviderDisplayName}, {"email", email}, {"username", username} }).AbsoluteUri;
 
                 return Redirect(redirectUrl);
             }
