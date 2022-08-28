@@ -72,10 +72,9 @@ public class RequestEmailChange : ControllerBase
             return this.GenUnprocessableProblem();
         }
 
-        var bytes = new byte[8];
+        var bytes = SodiumLib.randombytes(8);
         var codeBytes = new byte[8];
-        SodiumLib.randombytes_buf(bytes, bytes.Length);
-        
+
         for (int i = 0; i < bytes.Length; ++i)
         {
             codeBytes[i] = Convert.ToByte(bytes[i] % 26 + 65);

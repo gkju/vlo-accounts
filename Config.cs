@@ -24,17 +24,17 @@ namespace VLO_BOARDS
             new ApiResource()
             {
                 Enabled = _env.IsDevelopment(),
-                Name = "VLO_BOARDS_API",
-                DisplayName = "VLO Boards API",
+                Name = "main",
+                DisplayName = "VLO main API",
                 AllowedAccessTokenSigningAlgorithms = new List<string> {"RS256"},
-                Scopes = new List<string> {"VLO_BOARDS"},
+                Scopes = new List<string> {"main.general"},
                 UserClaims = new List<string> {"name", "email", "openid", "profile"},
                 ApiSecrets = new List<Secret> {new Secret("SECRET1")}
             }
         };
         public IEnumerable<ApiScope> ApiScopes => new List<ApiScope>
         {
-            new ApiScope("VLO_BOARDS", "VLO Boards api scope")
+            new ApiScope("main.general", "VLO general scope")
         };
         
         public IEnumerable<Client> Clients => new List<Client>

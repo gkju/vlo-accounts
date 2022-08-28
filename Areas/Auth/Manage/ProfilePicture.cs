@@ -128,7 +128,7 @@ public class ProfilePicture : ControllerBase
             return this.GenBadRequestProblem();
         }
 
-        user.DeleteProfilePicture(_dbContext);
+        await user.DeleteProfilePicture(_dbContext);
         await _dbContext.SaveChangesAsync();
         
         return Ok();
