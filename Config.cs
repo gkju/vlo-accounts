@@ -42,8 +42,8 @@ namespace VLO_BOARDS
             new Client
             {
                 Enabled = _env.IsDevelopment(),
-                ClientId = "VLO_BOARDS",
-                ClientName = "VLO_BOARDS",
+                ClientId = "VLO_BOARDS_DEV",
+                ClientName = "VLO_BOARDS_DEV",
                 AllowedGrantTypes = GrantTypes.Code,
                 RedirectUris = { "http://localhost:3000/login-callback" },
                 PostLogoutRedirectUris = { "http://localhost:3000/logout-callback" },
@@ -51,11 +51,11 @@ namespace VLO_BOARDS
                     {
                     IdentityServerConstants.StandardScopes.OpenId,
                     IdentityServerConstants.StandardScopes.Profile,
-                    "VLO_BOARDS"
+                    "main.general"
                 },
-                    RequirePkce = true,
-                    RequireClientSecret = false,
-                    ClientSecrets = new List<Secret> {},
+                RequirePkce = true,
+                RequireClientSecret = false,
+                ClientSecrets = new List<Secret> {},
                 AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
                 AllowedCorsOrigins = new List<string>() {"http://localhost:3000"}
             },
@@ -65,13 +65,53 @@ namespace VLO_BOARDS
                 ClientId = "VLO_BOARDS",
                 ClientName = "VLO_BOARDS",
                 AllowedGrantTypes = GrantTypes.Code,
+                RedirectUris = { "https://accounts.suvlo.pl/login-callback" },
+                PostLogoutRedirectUris = { "https://accounts.suvlo.pl/logout-callback" },
+                AllowedScopes = new List<string>
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "main.general"
+                },
+                RequirePkce = true,
+                RequireClientSecret = false,
+                ClientSecrets = new List<Secret> {},
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
+                AllowedCorsOrigins = new List<string>() {"https://accounts.suvlo.pl"}
+            },
+            new Client
+            {
+                Enabled = _env.IsDevelopment(),
+                ClientId = "VLO_MAIN_DEV",
+                ClientName = "VLO_MAIN_DEV",
+                AllowedGrantTypes = GrantTypes.Code,
+                RedirectUris = { "http://localhost:3001/login-callback", "https://localhost:3001/login-callback" },
+                PostLogoutRedirectUris = { "http://localhost:3001/logout-callback", "https://localhost:3001/login-callback" },
+                AllowedScopes = new List<string>
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "main.general"
+                },
+                RequirePkce = true,
+                RequireClientSecret = false,
+                ClientSecrets = new List<Secret> {},
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
+                AllowedCorsOrigins = new List<string>() {"http://localhost:3001", "https://localhost:3001"}
+            },
+            new Client
+            {
+                Enabled = true,
+                ClientId = "VLO_MAIN",
+                ClientName = "VLO_MAIN",
+                AllowedGrantTypes = GrantTypes.Code,
                 RedirectUris = { "https://suvlo.pl/login-callback" },
                 PostLogoutRedirectUris = { "https://suvlo.pl/logout-callback" },
                 AllowedScopes = new List<string>
                 {
                     IdentityServerConstants.StandardScopes.OpenId,
                     IdentityServerConstants.StandardScopes.Profile,
-                    "VLO_BOARDS"
+                    "main.general"
                 },
                 RequirePkce = true,
                 RequireClientSecret = false,

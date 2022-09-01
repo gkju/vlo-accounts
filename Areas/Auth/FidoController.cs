@@ -316,6 +316,11 @@ public class FidoController : ControllerBase
                 cred.StoredCredential.SignatureCounter = res.Counter;
                 await _db.SaveChangesAsync(cancellationToken);
 
+                if (!user.EmailConfirmed)
+                {
+                    throw new Exception("Niepotwierdzony adres e-mail");
+                }
+
                 await _signInManager.SignInAsync(user, true);
 
                 // 7. return OK to client

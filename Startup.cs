@@ -106,6 +106,7 @@ namespace VLO_BOARDS
             {
                 services.AddDatabaseDeveloperPageExceptionFilter();
                 corsorigins.Add("http://localhost:3000");
+                corsorigins.Add("http://localhost:3001");
             }
             
             services.AddTransient(o => new MinioConfig {BucketName = bucketName, VideoBucketName = videoBucketName});
