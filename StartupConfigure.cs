@@ -79,7 +79,6 @@ namespace VLO_BOARDS
                     name: "default",
                     pattern: "/api/{controller}/{action=Index}/{id?}");
             });
-            app.UseSentryTracing();
 
             if (env.IsDevelopment())
             {
@@ -87,6 +86,10 @@ namespace VLO_BOARDS
                 {
                     spa.UseProxyToSpaDevelopmentServer("http://localhost:3000");
                 });
+            }
+            else
+            {
+                app.UseSentryTracing();
             }
         }
         

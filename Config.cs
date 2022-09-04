@@ -45,8 +45,8 @@ namespace VLO_BOARDS
                 ClientId = "VLO_BOARDS_DEV",
                 ClientName = "VLO_BOARDS_DEV",
                 AllowedGrantTypes = GrantTypes.Code,
-                RedirectUris = { "http://localhost:3000/login-callback" },
-                PostLogoutRedirectUris = { "http://localhost:3000/logout-callback" },
+                RedirectUris = { "http://localhost:3000/login-callback", "https://localhost:3000/login-callback" },
+                PostLogoutRedirectUris = { "http://localhost:3000/logout-callback", "https://localhost:3000/logout-callback" },
                     AllowedScopes = new List<string>
                     {
                     IdentityServerConstants.StandardScopes.OpenId,
@@ -57,7 +57,7 @@ namespace VLO_BOARDS
                 RequireClientSecret = false,
                 ClientSecrets = new List<Secret> {},
                 AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
-                AllowedCorsOrigins = new List<string>() {"http://localhost:3000"}
+                AllowedCorsOrigins = new List<string>() {"http://localhost:3000", "https://localhost:3000"}
             },
             new Client
             {

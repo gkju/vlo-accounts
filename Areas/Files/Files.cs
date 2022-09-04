@@ -76,14 +76,14 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> GetFile(string id)
     {
         ApplicationUser user = await userManager.GetUserAsync(User);
-        File file = await applicationDbContext.Files.Where(file => file.ObjectId == id).SingleOrDefaultAsync();
-        /*if (!file.MayView(user))
-        {
-            return Unauthorized();
-        }*/
+        File file = await applicationDbContext.Files.Where(file => file.ObjectId == id).FirstOrDefaultAsync();
         if (file == default(File))
         {
             return NotFound("No file of given id exists");
+        }
+        if (!file.MayView(user))
+        {
+            return Unauthorized();
         }
 
         return Ok(file.GetSignedUrl(minioClient));
