@@ -287,6 +287,10 @@ namespace VLO_BOARDS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -364,9 +368,6 @@ namespace VLO_BOARDS.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
-                    b.Property<string>("ArticleId")
-                        .HasColumnType("text");
-
                     b.Property<string>("AuthorId")
                         .HasColumnType("text");
 
@@ -375,8 +376,6 @@ namespace VLO_BOARDS.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ArticleId");
 
                     b.HasIndex("AuthorId");
 
@@ -409,6 +408,21 @@ namespace VLO_BOARDS.Migrations
                     b.HasIndex("boardName");
 
                     b.ToTable("Threads");
+                });
+
+            modelBuilder.Entity("ArticleTag", b =>
+                {
+                    b.Property<string>("ArticlesArticleId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TagsId")
+                        .HasColumnType("text");
+
+                    b.HasKey("ArticlesArticleId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("ArticleTag");
                 });
 
             modelBuilder.Entity("Fido2NetLib.Objects.PublicKeyCredentialDescriptor", b =>
@@ -720,10 +734,6 @@ namespace VLO_BOARDS.Migrations
 
             modelBuilder.Entity("AccountsData.Models.DataModels.Tag", b =>
                 {
-                    b.HasOne("AccountsData.Models.DataModels.Article", null)
-                        .WithMany("Tags")
-                        .HasForeignKey("ArticleId");
-
                     b.HasOne("AccountsData.Models.DataModels.ApplicationUser", "Author")
                         .WithMany()
                         .HasForeignKey("AuthorId");
@@ -740,6 +750,21 @@ namespace VLO_BOARDS.Migrations
                         .IsRequired();
 
                     b.Navigation("board");
+                });
+
+            modelBuilder.Entity("ArticleTag", b =>
+                {
+                    b.HasOne("AccountsData.Models.DataModels.Article", null)
+                        .WithMany()
+                        .HasForeignKey("ArticlesArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AccountsData.Models.DataModels.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -830,8 +855,6 @@ namespace VLO_BOARDS.Migrations
                     b.Navigation("Reviewers");
 
                     b.Navigation("Revisions");
-
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("AccountsData.Models.DataModels.Folder", b =>
