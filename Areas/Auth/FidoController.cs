@@ -66,7 +66,7 @@ public class FidoController : ControllerBase
         }
         
         [HttpPost]
-        [Route("/fidoRegisterUser")]
+        [Route("fidoRegisterUser")]
         [ProducesResponseType(typeof(CredentialCreateOptions), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> MakeCredentialOptionsRegisterUser(FidoRegisterInput input)
@@ -160,11 +160,11 @@ public class FidoController : ControllerBase
         }
 
         [HttpPost]
-        [Route("/makeCredentialOptions")]
+        [Route("makeCredentialOptions")]
         [Authorize]
         [ProducesResponseType(typeof(CredentialCreateOptions), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(CredentialCreateOptions), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> MakeCredentialOptions(MakeCredentialsOptionsInput input)
+        public async Task<ActionResult> MakeCredentialOptionsAsync(MakeCredentialsOptionsInput input)
         {
             try
             {
@@ -181,11 +181,11 @@ public class FidoController : ControllerBase
         }
 
         [HttpPost]
-        [Route("/makeCredential")]
+        [Route("makeCredential")]
         [Authorize]
         [ProducesResponseType(typeof(CredentialMakeResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(CredentialMakeResult), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
+        public async Task<ActionResult> MakeCredentialAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
         {
             try
             {
@@ -226,6 +226,10 @@ public class FidoController : ControllerBase
                     StoredCredential = cred
                 });
                 await _userManager.UpdateAsync(user);
+                
+                // Remove Certificates from success because System.Text.Json cannot serialize them properly. See https://github.com/passwordless-lib/fido2-net-lib/issues/328
+                success.Result.AttestationCertificate = null;
+                success.Result.AttestationCertificateChain = null;
 
                 // 4. return "ok" to the client
                 return Ok(success);
@@ -237,7 +241,7 @@ public class FidoController : ControllerBase
         }
 
         [HttpPost]
-        [Route("/assertionOptions")]
+        [Route("assertionOptions")]
         [ProducesResponseType(typeof(AssertionOptions), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AssertionOptions), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> AssertionOptionsPost(string username, string userVerification)
@@ -278,8 +282,8 @@ public class FidoController : ControllerBase
         }
 
         [HttpPost]
-        [Route("/makeAssertion")]
-        public async Task<ActionResult> MakeAssertion(AuthenticatorAssertionRawResponse clientResponse, CancellationToken cancellationToken)
+        [Route("makeAssertion")]
+        public async Task<ActionResult> MakeAssertionAsync(AuthenticatorAssertionRawResponse clientResponse, CancellationToken cancellationToken)
         {
             try
             {

@@ -23,13 +23,13 @@ namespace VLO_BOARDS
             //for prod retrieve secret in a safe manner
             new ApiResource()
             {
-                Enabled = _env.IsDevelopment(),
+                Enabled = true,
                 Name = "main",
                 DisplayName = "VLO main API",
                 AllowedAccessTokenSigningAlgorithms = new List<string> {"RS256"},
                 Scopes = new List<string> {"main.general"},
                 UserClaims = new List<string> {"name", "email", "openid", "profile"},
-                ApiSecrets = new List<Secret> {new Secret("SECRET1")}
+                ApiSecrets = new List<Secret> {new Secret("SECRET1d490a4637e35d47d4f399461")}
             }
         };
         public IEnumerable<ApiScope> ApiScopes => new List<ApiScope>
@@ -58,6 +58,26 @@ namespace VLO_BOARDS
                 ClientSecrets = new List<Secret> {},
                 AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
                 AllowedCorsOrigins = new List<string>() {"http://localhost:3000", "https://localhost:3000"}
+            },
+            new Client
+            {
+                Enabled = _env.IsDevelopment(),
+                ClientId = "VLO_BOARDS_DEV2",
+                ClientName = "VLO_BOARDS_DEV2",
+                AllowedGrantTypes = GrantTypes.Code,
+                RedirectUris = { "https://localhost:5001/login-callback" },
+                PostLogoutRedirectUris = { "https://localhost:5001/logout-callback" },
+                AllowedScopes = new List<string>
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "main.general"
+                },
+                RequirePkce = true,
+                RequireClientSecret = false,
+                ClientSecrets = new List<Secret> {},
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
+                AllowedCorsOrigins = new List<string>() {"https://localhost:5001"}
             },
             new Client
             {
@@ -118,6 +138,26 @@ namespace VLO_BOARDS
                 ClientSecrets = new List<Secret> {},
                 AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
                 AllowedCorsOrigins = new List<string>() {"https://suvlo.pl"}
+            },
+            new Client
+            {
+                Enabled = true,
+                ClientId = "VLO_MAIN2",
+                ClientName = "VLO_MAIN2",
+                AllowedGrantTypes = GrantTypes.Code,
+                RedirectUris = { "https://boards.suvlo.pl/login-callback" },
+                PostLogoutRedirectUris = { "https://boards.suvlo.pl/logout-callback" },
+                AllowedScopes = new List<string>
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "main.general"
+                },
+                RequirePkce = true,
+                RequireClientSecret = false,
+                ClientSecrets = new List<Secret> {},
+                AllowedIdentityTokenSigningAlgorithms = new List<string> {"RS256"},
+                AllowedCorsOrigins = new List<string>() {"https://boards.suvlo.pl"}
             },
         };
     }

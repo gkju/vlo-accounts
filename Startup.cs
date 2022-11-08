@@ -154,8 +154,19 @@ namespace VLO_BOARDS
                     Email = "gkjuszczyk@gmail.com"
                 }});
                 
-                c.CustomSchemaIds(type => type.ToString());
-                c.CustomSchemaIds(type => type.FullName.Replace("+", "_"));
+                c.CustomSchemaIds(type =>
+                {
+                    var str = type.FullName.ToString().Replace("+", "_");
+                    str = str.Replace("`", "_");
+                    str = str.Replace("[", "_");
+                    str = str.Replace("]", "_");
+                    str = str.Replace(",", "_");
+                    str = str.Replace(";", "_");
+                    str = str.Replace(".", "_");
+                    str = str.Replace("=", "_");
+                    str = str.Replace(" ", "_");
+                    return str;
+                });
                 c.EnableAnnotations();
 
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -174,6 +185,7 @@ namespace VLO_BOARDS
 
             var is4Builder = services.AddIdentityServer(options =>
                 {
+                    options.LicenseKey = Configuration["IdentityServer:LicenseKey"];
                     options.UserInteraction = new UserInteractionOptions()
                     {
                         LogoutUrl = "/Logout",

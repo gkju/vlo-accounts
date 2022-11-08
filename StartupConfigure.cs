@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
@@ -6,7 +8,13 @@ using CanonicalEmails;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Net.Http.Headers;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace VLO_BOARDS
 {
@@ -15,7 +23,18 @@ namespace VLO_BOARDS
         /// This method configures the app
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, AmazonS3Client minioClient, MinioConfig minioConfig)
         {
-            app.UseForwardedHeaders();
+            var forwardOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
+                // Needed because of mixing http and https.
+                RequireHeaderSymmetry = false,
+            };
+
+            // Accept X-Forwarded-* headers from all sources.
+            forwardOptions.KnownNetworks.Clear();
+            forwardOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(forwardOptions);
             
             if (env.IsDevelopment())
             {
@@ -28,27 +47,29 @@ namespace VLO_BOARDS
             {
                 app.UseCookiePolicy(new CookiePolicyOptions
                 {
-                    MinimumSameSitePolicy = SameSiteMode.Strict
+                    Secure = CookieSecurePolicy.Always,
+                    HttpOnly = HttpOnlyPolicy.Always,
+                    MinimumSameSitePolicy = SameSiteMode.Lax
                 });
             }
             
             IS4Utils.InitializeDatabase(app, new Config(env));
             EnsureBucketsExits(minioClient, minioConfig).Wait();
 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("v1/swagger.json", "VLO Boards API v1");
+            });
+            app.UseReDoc(c =>
+            {
+                c.DocumentTitle = "Dokumentacja API Vlo Boards, dostępna również pod /swagger/";
+            });
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseMigrationsEndPoint();
-                
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("v1/swagger.json", "VLO Boards API v1");
-                });
-                app.UseReDoc(c =>
-                {
-                    c.DocumentTitle = "Dokumentacja API Vlo Boards, dostępna również pod /swagger/";
-                });
             }
             else
             {
@@ -64,12 +85,38 @@ namespace VLO_BOARDS
                 LowerCase = true,
                 NormalizeHost = true
             });
-            
-            app.UseHttpsRedirection();
+
             app.UseRouting();
             app.UseIdentityServer();
             app.UseAuthorization();
             app.UseCors("DefaultExternalOrigins");
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = ctx =>
+                {
+                    
+                    if (ctx.Context.Request.Path.StartsWithSegments("/static"))
+                    {
+                        var headers = ctx.Context.Response.GetTypedHeaders();
+                        headers.CacheControl = new CacheControlHeaderValue
+                        {
+                            Public = true,
+                            MaxAge = TimeSpan.FromDays(365)
+                        };
+                    }
+                    else
+                    {
+                        var headers = ctx.Context.Response.GetTypedHeaders();
+                        headers.CacheControl = new CacheControlHeaderValue
+                        {
+                            Public = true,
+                            MaxAge = TimeSpan.FromDays(0),
+                            NoCache = true,
+                            NoStore = true
+                        };
+                    }
+                }
+            });
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
@@ -78,17 +125,22 @@ namespace VLO_BOARDS
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "/api/{controller}/{action=Index}/{id?}");
+                if (!env.IsDevelopment())
+                {
+                    endpoints.MapFallbackToFile("index.html");
+                }
             });
 
             if (env.IsDevelopment())
             {
-                app.UseSpa(spa =>
+                app.UseSpa(a =>
                 {
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:3000");
+                    a.UseProxyToSpaDevelopmentServer("http://localhost:3000");
                 });
             }
             else
             {
+                
                 app.UseSentryTracing();
             }
         }

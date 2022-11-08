@@ -98,7 +98,7 @@ public class ExternalLoginsManagement : ControllerBase
     /// <param name="provider"></param>
     /// <returns></returns>
     [Route("GetChallenge")]
-    [HttpPost]
+    [HttpGet]
     public async Task<IActionResult> OnPostAsync(string provider)
     {
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);

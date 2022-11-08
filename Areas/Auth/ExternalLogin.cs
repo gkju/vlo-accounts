@@ -57,7 +57,7 @@ namespace VLO_BOARDS.Areas.Auth
         /// <param name="returnUrl"></param>
         /// <returns></returns>
         [HttpGet]
-        public ActionResult OnGet(string provider, bool rememberMe = false, string returnUrl = null)
+        public async Task<ActionResult> OnGet(string provider, bool rememberMe = false, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
 
@@ -66,6 +66,8 @@ namespace VLO_BOARDS.Areas.Auth
             {
                 returnUrl = Url.Content("~/");
             }
+            
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
             
             // Request a redirect to the external login provider.
             var redirectUrl = _emailTemplates.GenerateUrl("api/Auth/ExternalLogin/Callback",  new Dictionary<string, string>() {{"returnUrl", returnUrl}, {"rememberMe", rememberMe.ToString() }}).ToString();
@@ -183,6 +185,7 @@ namespace VLO_BOARDS.Areas.Auth
             if (result.Succeeded)
             {
                 result = await _userManager.AddLoginAsync(user, info);
+                await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
@@ -215,10 +218,10 @@ namespace VLO_BOARDS.Areas.Auth
     
     public class ExternalLoginRegisterInputModel
     {
-        [Required] [EmailAddress]
+        [Required]
         public string Email { get; set; }
             
-        [Required] [DataType(DataType.Text)]
+        [Required]
         public string Username { get; set; }
     }
 }

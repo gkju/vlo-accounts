@@ -44,18 +44,10 @@ public class ProfileInfo : ControllerBase
             .Include(u => u.FidoCredentials)
             .Where(u => u.Id == userP.Id)
             .FirstOrDefaultAsync();
+        
         foreach (var cred in user.FidoCredentials)
         {
             cred.Owner = null;
-        }
-        
-        if (user.PasswordHash is not null)
-        {
-            user.PasswordHash = "********";
-        }
-        else
-        {
-            user.PasswordHash = "-";
         }
         
         return Ok(user);
