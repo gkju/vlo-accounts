@@ -85,11 +85,12 @@ namespace VLO_BOARDS
                 LowerCase = true,
                 NormalizeHost = true
             });
-
+            
             app.UseRouting();
             app.UseIdentityServer();
-            app.UseAuthorization();
             app.UseCors("DefaultExternalOrigins");
+            app.UseAuthorization();
+            
             app.UseStaticFiles(new StaticFileOptions
             {
                 OnPrepareResponse = ctx =>
@@ -117,14 +118,15 @@ namespace VLO_BOARDS
                     }
                 }
             });
+            app.UseRateLimiter();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "areas",
-                    pattern: "/api/{area:exists}/{controller}/");
+                    pattern: "/api/{area:exists}/{controller}/").RequireRateLimiting(slidingPolicy).RequireCors("DefaultExternalOrigins");
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "/api/{controller}/{action=Index}/{id?}");
+                    pattern: "/api/{controller}/{action=Index}/{id?}").RequireRateLimiting(slidingPolicy).RequireCors("DefaultExternalOrigins");
                 if (!env.IsDevelopment())
                 {
                     endpoints.MapFallbackToFile("index.html");

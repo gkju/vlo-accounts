@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Threading.RateLimiting;
 using Duende.IdentityServer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +26,7 @@ using Duende.IdentityServer.EntityFramework.DbContexts;
 using IdentityModel;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.RateLimiting;
 
 
 namespace VLO_BOARDS
@@ -232,6 +234,16 @@ namespace VLO_BOARDS
                     options.SaveTokens = true;
                     options.AccessType = "offline";
                 });
+
+            services.AddRateLimiter(_ => _
+                .AddSlidingWindowLimiter(policyName: slidingPolicy, options =>
+                {
+                    options.PermitLimit = 50;
+                    options.Window = TimeSpan.FromSeconds(10);
+                    options.SegmentsPerWindow = 10;
+                    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    options.QueueLimit = 100;
+                }));
             
             services.AddCors(options =>
             {
@@ -245,5 +257,6 @@ namespace VLO_BOARDS
                     });
             });
         }
+        static string slidingPolicy = "sliding";
     }
 }

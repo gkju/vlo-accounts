@@ -47,6 +47,7 @@ public class ProfilePicture : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> OnGetAsync(string userId)
     {
         var user = await _dbContext.Users
